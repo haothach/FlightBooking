@@ -1,0 +1,81 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+
+
+<div class="container border p-4">
+    <!-- Title -->
+    <div class="text-center mb-4">
+        <h5>TRA CỨU CHUYẾN BAY</h5>
+    </div>
+
+    <!-- Trip Type Selection -->
+    <div class="d-flex justify-content-center mb-3">
+        <div class="form-check me-3">
+            <input class="btn-check" type="radio" name="tripType" id="oneWay" checked>
+            <label class="btn btn-outline-dark" for="oneWay">Một chiều</label>
+        </div>
+        <div class="form-check">
+            <input class="btn-check" type="radio" name="tripType" id="roundTrip">
+            <label class="btn btn-outline-dark" for="roundTrip">Hai chiều</label>
+        </div>
+    </div>
+
+    <!-- Flight Search Form -->
+    <form>
+        <div class="row mb-3">
+            <!-- Departure Location -->
+            <div class="col">
+                <select class="form-select" id="departure" name="departure">
+                    <option selected>TP.HCM</option>
+                    <option value="1">Đà Nẵng</option>
+                    <option value="2">Nha Trang</option>
+                    <!-- Add more options as needed -->
+                </select>
+            </div>
+
+            <!-- Destination Location -->
+            <div class="col">
+                <select class="form-select" id="destination" name="destination">
+                    <option selected>Hà Nội</option>
+                    <option value="1">Đà Nẵng</option>
+                    <option value="2">Nha Trang</option>
+                    <!-- Add more options as needed -->
+                </select>
+            </div>
+        </div>
+
+        <!-- Date Inputs -->
+        <div class="row mb-3">
+            <div class="col">
+                <input type="date" class="form-control" id="departureDate" name="departureDate" placeholder="Ngày đi">
+            </div>
+            <div class="col">
+                <input type="date" class="form-control" id="returnDate" name="returnDate" placeholder="Ngày về" disabled>
+            </div>
+        </div>
+
+        <!-- Search Button -->
+        <div class="text-center mb-3">
+            <button type="submit" class="btn btn-red w-100">Tra cứu</button>
+        </div>
+
+        <!-- Today's Flight and View All Button -->
+        <div class="d-flex justify-content-between">
+            <span>Chuyến bay của ngày hôm nay: dd/mm/yyyy</span>
+            <button type="button" class="btn btn-red">Xem tất cả</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Enable/disable return date based on trip type selection
+    document.getElementById("oneWay").addEventListener("change", function() {
+      document.getElementById("returnDate").disabled = true;
+    });
+    document.getElementById("roundTrip").addEventListener("change", function() {
+      document.getElementById("returnDate").disabled = false;
+    });
+</script>
+
+{% endblock %}
