@@ -3,79 +3,89 @@
 {% block content %}
 
 
-<div class="container border p-4">
-    <!-- Title -->
-    <div class="text-center mb-4">
-        <h5>TRA CỨU CHUYẾN BAY</h5>
-    </div>
-
-    <!-- Trip Type Selection -->
-    <div class="d-flex justify-content-center mb-3">
-        <div class="form-check me-3">
-            <input class="btn-check" type="radio" name="tripType" id="oneWay" checked>
-            <label class="btn btn-outline-dark" for="oneWay">Một chiều</label>
-        </div>
-        <div class="form-check">
-            <input class="btn-check" type="radio" name="tripType" id="roundTrip">
-            <label class="btn btn-outline-dark" for="roundTrip">Hai chiều</label>
-        </div>
-    </div>
-
-    <!-- Flight Search Form -->
+<div class="container my-5 col-md-8 col-lg-6 mx-auto">
+    <h2 class="text-center mb-7">TRA CỨU CHUYẾN BAY</h2>
     <form>
         <div class="row mb-3">
-            <!-- Departure Location -->
-            <div class="col">
+            <!-- Departure -->
+            <div class="col-md-6">
+                <label for="departure" class="form-label">Từ</label>
                 <select class="form-select" id="departure" name="departure">
-                    <option selected>TP.HCM</option>
-                    <option value="1">Đà Nẵng</option>
-                    <option value="2">Nha Trang</option>
-                    <!-- Add more options as needed -->
+                    <option value="">Chọn điểm đi</option>
+                    {% for p in pros %}
+                    <option value="{{ p.id }}">{{ p.name }}</option>
+                    {% endfor %}
                 </select>
             </div>
 
-            <!-- Destination Location -->
-            <div class="col">
+            <!-- Destination -->
+            <div class="col-md-6">
+                <label for="destination" class="form-label">Đến</label>
                 <select class="form-select" id="destination" name="destination">
-                    <option selected>Hà Nội</option>
-                    <option value="1">Đà Nẵng</option>
-                    <option value="2">Nha Trang</option>
-                    <!-- Add more options as needed -->
+                    <option value="">Chọn điểm đến</option>
+                    {% for p in pros %}
+                    <option value="{{ p.id }}">{{ p.name }}</option>
+                    {% endfor %}
                 </select>
             </div>
         </div>
 
-        <!-- Date Inputs -->
         <div class="row mb-3">
-            <div class="col">
-                <input type="date" class="form-control" id="departureDate" name="departureDate" placeholder="Ngày đi">
+            <!-- Departure Date -->
+            <div class="col-md-6">
+                <label for="departure-date" class="form-label">Ngày đi</label>
+                <input type="date" class="form-control" id="departure-date" name="departure-date">
             </div>
-            <div class="col">
-                <input type="date" class="form-control" id="returnDate" name="returnDate" placeholder="Ngày về" disabled>
+
+            <!-- Return Date -->
+            <div class="col-md-6" id="return">
+                <label for="return-date" class="form-label">Ngày về</label>
+                <input type="date" class="form-control" id="return-date" name="return-date">
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <!-- Flight Type -->
+            <div class="col-md-6">
+                <label class="form-label">Loại chuyến bay</label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="flight-type" id="one-way" value="one-way"
+                           checked>
+                    <label class="form-check-label" for="one-way">Một chiều</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="flight-type" id="round-trip" value="round-trip">
+                    <label class="form-check-label" for="round-trip">Khứ hồi</label>
+                </div>
+            </div>
+
+            <!-- Passengers -->
+            <div class="col-md-6">
+                <label for="passengers" class="form-label">Số hành khách</label>
+                <select class="form-select" id="passengers" name="passengers">
+                    <option value="1">1 người lớn, 0 trẻ em</option>
+                    <option value="2">2 người lớn, 0 trẻ em</option>
+                    <option value="1_1">1 người lớn, 1 trẻ em</option>
+                    <!-- Thêm các tùy chọn khác nếu cần -->
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <!-- Seat Class -->
+            <div class="col-md-12">
+                <label for="seat-class" class="form-label">Hạng ghế</label>
+                <select class="form-select" id="seat-class" name="seat-class">
+                    <option value="economy">Hạng phổ thông</option>
+                    <option value="business">Hạng thương gia</option>
+                    <option value="first">Hạng nhất</option>
+                </select>
             </div>
         </div>
 
         <!-- Search Button -->
-        <div class="text-center mb-3">
-            <button type="submit" class="btn btn-red w-100">Tra cứu</button>
-        </div>
-
-        <!-- Today's Flight and View All Button -->
-        <div class="d-flex justify-content-between">
-            <span>Chuyến bay của ngày hôm nay: dd/mm/yyyy</span>
-            <button type="button" class="btn btn-red">Xem tất cả</button>
-        </div>
+        <button type="submit" class="btn btn-danger w-100">Tra cứu chuyến bay</button>
     </form>
 </div>
-
-<script>
-    // Enable/disable return date based on trip type selection
-    document.getElementById("oneWay").addEventListener("change", function() {
-      document.getElementById("returnDate").disabled = true;
-    });
-    document.getElementById("roundTrip").addEventListener("change", function() {
-      document.getElementById("returnDate").disabled = false;
-    });
-</script>
 
 {% endblock %}

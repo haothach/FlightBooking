@@ -1,0 +1,104 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>TP. Hồ Chí Minh → TP. Hồ Chí Minh</h2>
+    </div>
+
+    <!-- Search Filters -->
+    <div class="border p-4 rounded mb-4">
+        <h5 class="mb-3">Bộ lọc</h5>
+
+        <!-- Hãng hàng không -->
+        <div class="mb-3">
+            <label class="form-label">Hãng hàng không</label>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="vietnamAirlines">
+                <label class="form-check-label" for="vietnamAirlines">Vietnam Airlines</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="bambooAirways">
+                <label class="form-check-label" for="bambooAirways">Bamboo Airways</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="vietjetAir">
+                <label class="form-check-label" for="vietjetAir">Vietjet Air</label>
+            </div>
+        </div>
+
+        <!-- Giờ cất cánh -->
+        <div class="mb-3">
+            <label class="form-label">Giờ cất cánh</label>
+            <div class="row">
+                <div class="col-6 col-md-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="time1">
+                        <label class="form-check-label" for="time1">00:00 - 06:00</label>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="time2">
+                        <label class="form-check-label" for="time2">06:00 - 12:00</label>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="time3">
+                        <label class="form-check-label" for="time3">12:00 - 18:00</label>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="time4">
+                        <label class="form-check-label" for="time4">18:00 - 24:00</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Giá vé/hành khách -->
+        <div class="mb-3">
+            <label class="form-label">Giá vé/hành khách</label>
+            <input type="range" class="form-range" min="1000000" max="10000000" step="500000" id="priceRange">
+        </div>
+    </div>
+
+    <!-- Flight Results -->
+    <div class="border p-4 rounded">
+        <h5 class="mb-3">Kết quả tìm kiếm</h5>
+
+        <!-- Flight Item -->
+        <div class="flight-item border p-3 rounded d-flex justify-content-between align-items-center mb-3">
+            <div class="flight-details">
+                <span class="badge bg-primary me-2">Hạng 1</span>
+                <span class="fw-bold">09:30</span> - <span class="fw-bold">12:30</span>
+                <span class="text-muted mx-2">TP.HCM → Hà Nội</span>
+                <span class="text-muted">3 tiếng</span>
+            </div>
+            <div class="text-end">
+                <div class="fw-bold mb-2">2.320.000 VND</div>
+                <button class="btn btn-danger">Chọn</button>
+            </div>
+        </div>
+
+        <!-- Repeat for additional flights -->
+        <div class="flight-item border p-3 rounded d-flex justify-content-between align-items-center mb-3">
+            <div class="flight-details">
+                <span class="badge bg-primary me-2">Hạng 1</span>
+                <span class="fw-bold">09:30</span> - <span class="fw-bold">12:30</span>
+                <span class="text-muted mx-2">TP.HCM → Hà Nội</span>
+                <span class="text-muted">3 tiếng</span>
+            </div>
+            <div class="text-end">
+                <div class="fw-bold mb-2">2.320.000 VND</div>
+                <button class="btn btn-danger">Chọn</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,9 +1,11 @@
-from app.models import User
+from app.models import User, Province, Airport
 from app import app, db
 import hashlib
 import cloudinary.uploader
 
 
+def load_province():
+    return Province.query.order_by('name').all()
 
 
 def add_user(name, username, password, avatar):

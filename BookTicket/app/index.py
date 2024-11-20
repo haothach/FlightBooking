@@ -6,24 +6,33 @@ from app import app, login
 from flask_login import login_user, logout_user
 
 
+# @app.route("/")
+# def index():
+#     return render_template("index.html")
+
 @app.route("/")
 def index():
-    return render_template("index.html")
+    provinces = dao.load_province()
+    # trip_type = request.args.get('tripType')
+    # departure = request.args.get('departure')
+    # destination = request.args.get('destination')
+    # dep_date = request.args.get('departureDate')
+    #
+    # if not trip_type.__eq__('oneWay'):
+    #     re_date = request.args.get('returnDate')
+    #     return render_template('index.html', provinces=provinces, tripType=trip_type, depature=departure,
+    #                        destination=destination, departureDate=dep_date, returnDate=re_date)
+    #
+    #
+    # return render_template('index.html',  provinces=provinces, tripType=trip_type, depature=departure,
+    #                        destination=destination, departureDate=dep_date)
 
-@app.route("/")
-def search_flights():
-    trip_type = request.args.get('tripType')
-    departure = request.args.get('departure')
-    destination = request.args.get('destination')
-    dep_date = request.args.get('departureDate')
-    if not trip_type.__eq__('oneWay'):
-        re_date = request.args.get('returnDate')
-        return render_template('index.html', tripType=trip_type, depature=departure,
-                           destination=destination, departureDate=dep_date, returnDate=re_date)
+    return render_template('index.html', pros=provinces)
 
 
-    return render_template('index.html', tripType=trip_type, depature=departure,
-                           destination=destination, departureDate=dep_date)
+@app.route("/searchflights")
+def searchflights():
+    return render_template('searchflights.html')
 
 
 @app.route("/register", methods=['get', 'post'])
