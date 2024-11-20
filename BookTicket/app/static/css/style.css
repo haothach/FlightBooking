@@ -1,3 +1,18 @@
 body {
-    background-color:#e3e3e3
+
+}
+
+.container-custom {
+    width: 80%;
+    margin: 0 auto;
+}
+.flight-item {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+.btn-red {
+    background-color: #dc3545;
+    color: white;
 }
