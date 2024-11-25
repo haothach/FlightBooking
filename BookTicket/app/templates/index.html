@@ -5,15 +5,15 @@
 
 <div class="container my-5 col-md-8 col-lg-6 mx-auto">
     <h2 class="text-center mb-7">TRA CỨU CHUYẾN BAY</h2>
-    <form>
+    <form action="/search">
         <div class="row mb-3">
             <!-- Departure -->
             <div class="col-md-6">
                 <label for="departure" class="form-label">Từ</label>
                 <select class="form-select" id="departure" name="departure">
                     <option value="">Chọn điểm đi</option>
-                    {% for p in pros %}
-                    <option value="{{ p.id }}">{{ p.name }}</option>
+                    {% for p in provinces %}
+                    <option value="{{ p.name }}">{{ p.name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -23,8 +23,8 @@
                 <label for="destination" class="form-label">Đến</label>
                 <select class="form-select" id="destination" name="destination">
                     <option value="">Chọn điểm đến</option>
-                    {% for p in pros %}
-                    <option value="{{ p.id }}">{{ p.name }}</option>
+                    {% for p in provinces %}
+                    <option value="{{ p.name }}">{{ p.name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -63,25 +63,12 @@
             <div class="col-md-6">
                 <label for="passengers" class="form-label">Số hành khách</label>
                 <select class="form-select" id="passengers" name="passengers">
-                    <option value="1">1 người lớn, 0 trẻ em</option>
-                    <option value="2">2 người lớn, 0 trẻ em</option>
-                    <option value="1_1">1 người lớn, 1 trẻ em</option>
-                    <!-- Thêm các tùy chọn khác nếu cần -->
+                    <option value="1">1</option>
+                    <option value="2">2</option>
                 </select>
             </div>
         </div>
 
-        <div class="row mb-4">
-            <!-- Seat Class -->
-            <div class="col-md-12">
-                <label for="seat-class" class="form-label">Hạng ghế</label>
-                <select class="form-select" id="seat-class" name="seat-class">
-                    <option value="economy">Hạng phổ thông</option>
-                    <option value="business">Hạng thương gia</option>
-                    <option value="first">Hạng nhất</option>
-                </select>
-            </div>
-        </div>
 
         <!-- Search Button -->
         <button type="submit" class="btn btn-danger w-100">Tra cứu chuyến bay</button>

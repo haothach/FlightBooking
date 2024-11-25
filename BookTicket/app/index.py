@@ -4,6 +4,7 @@ from flask import render_template, request, redirect
 import dao
 from app import app, login
 from flask_login import login_user, logout_user
+from datetime import datetime
 
 
 # @app.route("/")
@@ -13,26 +14,26 @@ from flask_login import login_user, logout_user
 @app.route("/")
 def index():
     provinces = dao.load_province()
-    # trip_type = request.args.get('tripType')
-    # departure = request.args.get('departure')
-    # destination = request.args.get('destination')
-    # dep_date = request.args.get('departureDate')
-    #
-    # if not trip_type.__eq__('oneWay'):
-    #     re_date = request.args.get('returnDate')
-    #     return render_template('index.html', provinces=provinces, tripType=trip_type, depature=departure,
-    #                        destination=destination, departureDate=dep_date, returnDate=re_date)
-    #
-    #
-    # return render_template('index.html',  provinces=provinces, tripType=trip_type, depature=departure,
-    #                        destination=destination, departureDate=dep_date)
-
-    return render_template('index.html', pros=provinces)
+    departure = request.args.get('departure')
+    destination = request.args.get('destination')
+    return render_template('index.html', provinces=provinces,
+                           destination=destination, departure=departure)
 
 
-@app.route("/searchflights")
-def searchflights():
-    return render_template('searchflights.html')
+@app.route("/search")
+def search():
+    departure = request.args.get('departure')
+    destination = request.args.get('destination')
+    departure_date = request.args.get('departure-date')
+    passenger = request.args.get('passengers')
+
+    flights = dao.load_flight(departure, destination)
+
+    date_obj = datetime.strptime(departure_date, "%Y-%m-%d")
+    formatted_date = date_obj.strftime("%d-%m-%Y")
+
+    return render_template('search.html', departure=departure, destination=destination,
+                           departure_date=formatted_date, passenger=passenger, flight=flights)
 
 
 @app.route("/register", methods=['get', 'post'])

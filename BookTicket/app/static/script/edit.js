@@ -55,3 +55,14 @@
    destinationSelect.addEventListener('change', updateOptions);
 
    document.addEventListener('DOMContentLoaded', updateOptions);
+
+    const departureDateInput = document.getElementById('departure-date');
+
+    // Tạo ngày hiện tại theo định dạng YYYY-MM-DD
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0'); // tháng bắt đầu từ 0 nên phải +1
+    const dd = String(today.getDate()).padStart(2, '0');
+
+    // Đặt giá trị mặc định cho input là ngày hiện tại
+    departureDateInput.value = `${yyyy}-${mm}-${dd}`;

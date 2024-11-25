@@ -6,13 +6,21 @@
 <div class="container-custom mt-4">
     <!-- Header Section -->
     <div class="d-flex justify-content-between align-items-center">
-        <h3 class="fw-bold btn btn-danger">TP. Hồ Chí Minh → TP. Hồ Chí Minh</h3>
+        {% if departure and destination %}
+        <h3 class="fw-bold btn btn-danger">{{ departure }} → {{ destination }}</h3>
+        {% elif departure %}
+        <h3 class="fw-bold btn btn-danger">Nơi khởi hành: {{ departure }}</h3>
+        {% elif destination %}
+        <h3 class="fw-bold btn btn-danger">Điểm đến: {{ destination }}</h3>
+        {% endif %}
     </div>
 
     <!-- Search Info and Filter Button -->
     <div class="d-flex justify-content-between align-items-center mt-3">
-        <span>Thứ 3, 10/10/2002 | 1 Hành khách | Hạng 1</span>
-        <button class="btn btn-danger">Thay đổi tìm kiếm</button>
+        <span>{{ departure_date }} | {{ passenger }} Hành khách</span>
+        <a href="/">
+            <button class="btn btn-danger">Thay đổi tìm kiếm</button>
+        </a>
     </div>
 
     <!-- Filter Section -->
@@ -77,7 +85,9 @@
         </div>
 
         <!-- Flight Results Section -->
+
         <div class="col-md-9">
+            {% for f in flight %}
             <div class="flight-item d-flex justify-content-between align-items-center">
                 <div>
                     <span class="badge bg-primary">Hạng 1</span>
@@ -86,7 +96,7 @@
                     <span class="ms-2">12:30</span>
                 </div>
                 <div>
-                    <p class="mb-0">TP.HCM → Hà Nội</p>
+                    <p class="mb-0">{{ f.flight_route.dep_airport.name }} → {{ f.flight_route.des_airport.name }}</p>
                     <small>Vietjet Air</small>
                 </div>
                 <div class="text-end">
@@ -94,25 +104,9 @@
                     <button class="btn btn-red">Chọn</button>
                 </div>
             </div>
-            <!-- Repeat the above block for additional flights -->
-            <!-- Copy this block multiple times as needed for additional flights -->
-            <div class="flight-item d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="badge bg-primary">Hạng 1</span>
-                    <span class="ms-2">09:30</span>
-                    <span class="ms-2">3 tiếng</span>
-                    <span class="ms-2">12:30</span>
-                </div>
-                <div>
-                    <p class="mb-0">TP.HCM → Hà Nội</p>
-                    <small>Vietjet Air</small>
-                </div>
-                <div class="text-end">
-                    <p class="mb-0 fw-bold">2.320.000 VND</p>
-                    <button class="btn btn-red">Chọn</button>
-                </div>
-            </div>
+            {% endfor %}
         </div>
+
     </div>
 </div>
 {% endblock %}
