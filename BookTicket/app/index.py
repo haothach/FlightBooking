@@ -1,5 +1,7 @@
 import math
+import sqlite3
 
+import sqlalchemy
 from flask import render_template, request, redirect
 import dao
 from app import app, login
@@ -27,13 +29,10 @@ def search():
     departure_date = request.args.get('departure-date')
     passenger = request.args.get('passengers')
 
-    flights = dao.load_flight(departure, destination)
-
-    date_obj = datetime.strptime(departure_date, "%Y-%m-%d")
-    formatted_date = date_obj.strftime("%d-%m-%Y")
+    flights = dao.query_database(departure, destination, departure_date)
 
     return render_template('search.html', departure=departure, destination=destination,
-                           departure_date=formatted_date, passenger=passenger, flight=flights)
+                           departure_date=departure_date, passenger=passenger, flights=flights)
 
 
 @app.route("/register", methods=['get', 'post'])

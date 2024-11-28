@@ -87,24 +87,28 @@
         <!-- Flight Results Section -->
 
         <div class="col-md-9">
-            {% for f in flight %}
-            <div class="flight-item d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="badge bg-primary">Hạng 1</span>
-                    <span class="ms-2">09:30</span>
-                    <span class="ms-2">3 tiếng</span>
-                    <span class="ms-2">12:30</span>
-                </div>
-                <div>
-                    <p class="mb-0">{{ f.flight_route.dep_airport.name }} → {{ f.flight_route.des_airport.name }}</p>
-                    <small>Vietjet Air</small>
-                </div>
-                <div class="text-end">
-                    <p class="mb-0 fw-bold">2.320.000 VND</p>
-                    <button class="btn btn-red">Chọn</button>
-                </div>
-            </div>
-            {% endfor %}
+            {% if flights %}
+                {% for f in flights %}
+                    <div class="flight-item d-flex justify-content-between align-items-center border p-3 mb-3">
+                        <!-- Thông tin chuyến bay -->
+                        <div>
+                            <span class="badge bg-primary">{{ f.ticket_class }}</span>
+                            <span class="ms-2">{{ f.flight_time }}</span>
+                        </div>
+                        <div>
+                            <p class="mb-0">{{ f.dep_airport_name }} → {{ f.des_airport_name }}</p>
+                            <small>{{ f.airline }}</small>
+                        </div>
+                        <div class="text-end">
+
+                            <p class="mb-0 fw-bold">{{"{:,.0f}".format( f.first_class_price )}} VND</p>
+                            <button class="btn btn-danger">Chọn</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+            <p>Không tìm thấy chuyến bay nào phù hợp.</p>
+            {% endif %}
         </div>
 
     </div>

@@ -10,6 +10,11 @@ import datetime
 
 from flask_login import UserMixin
 
+class BaseModel(db.Model):
+    __abstract__=True
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    #Các id ở dưới kế thừa từ basemodel
+
 
 class UserRole(RoleEnum):
     ADMIN = 1
@@ -23,8 +28,8 @@ class Airline(AirlineEnum):
     VietNam_Airline = 3
 
 
-class User(db.Model, UserMixin):
-    id = Column(Integer, primary_key=True, autoincrement=True)
+class User(BaseModel, UserMixin):
+
     name = Column(String(100), nullable=False)
     username = Column(String(100), nullable=False, unique=True)
     password = Column(String(100), nullable=False)
@@ -33,8 +38,7 @@ class User(db.Model, UserMixin):
     user_role = Column(Enum(UserRole), default=UserRole.USER)
 
 
-class Province(db.Model):
-    id = Column(Integer, primary_key=True, autoincrement=True)
+class Province(BaseModel):
     name = Column(String(100), nullable=False)
 
     airports = relationship('Airport', backref='province', lazy=True)
@@ -43,8 +47,8 @@ class Province(db.Model):
         return self.name
 
 
-class Airport(db.Model):
-    id = Column(Integer, primary_key=True, autoincrement=True)
+class Airport(BaseModel):
+
     name = Column(String(100), nullable=False)
     add = Column(String(100), nullable=False)
     province_id = Column(Integer, ForeignKey(Province.id), nullable=False)
@@ -54,8 +58,7 @@ class Airport(db.Model):
     intermediate_airports = relationship('IntermediateAirport', backref='airport', lazy=True)
 
 
-class FlightRoute(db.Model):
-    id = Column(Integer, primary_key=True, autoincrement=True)
+class FlightRoute(BaseModel):
 
     dep_airport_id = Column(Integer, ForeignKey(Airport.id), nullable=False)
     des_airport_id = Column(Integer, ForeignKey(Airport.id), nullable=False)
@@ -69,8 +72,7 @@ class FlightRoute(db.Model):
         return des_airport_id
 
 
-class Airplane(db.Model):
-    id = Column(Integer, primary_key=True, autoincrement=True)
+class Airplane(BaseModel):
     airplane_type = Column(Enum(Airline), nullable=False)
     capacity = Column(Integer, nullable=False)
     date_created = Column(DateTime, default=datetime.datetime.utcnow)
@@ -79,8 +81,8 @@ class Airplane(db.Model):
     seats = relationship('Seat', backref='airplane', lazy=True)
 
 
-class Flight(db.Model):
-    id = Column(Integer, primary_key=True, autoincrement=True)
+class Flight(BaseModel):
+
     flight_route_id = Column(Integer, ForeignKey(FlightRoute.id), nullable=False)
     airplane_id = Column(Integer, ForeignKey(Airplane.id), nullable=False)
     date_created = Column(DateTime, default=datetime.datetime.utcnow)
@@ -89,8 +91,8 @@ class Flight(db.Model):
     tickets = relationship('Ticket', backref='ticket', lazy=True)
 
 
-class FlightSchedule(db.Model):
-    id = Column(Integer, primary_key=True, autoincrement=True)
+class FlightSchedule(BaseModel):
+
     dep_date = Column(DateTime, nullable=False)
     flight_time = Column(Integer, nullable=False)
     first_class_seat_size = Column(Integer, nullable=False)
@@ -112,16 +114,16 @@ class IntermediateAirport(db.Model):
     date_created = Column(DateTime, default=datetime.datetime.utcnow)
 
 
-class TicketClass(db.Model):
-    id = Column(Integer, primary_key=True, autoincrement=True)
+class TicketClass(BaseModel):
+
     name = Column(String(50), nullable=False)
     date_created = Column(DateTime, default=datetime.datetime.utcnow)
 
     tickets = relationship('Ticket', backref='TicketClass', lazy=True)
 
 
-class Ticket(db.Model):
-    id = Column(Integer, primary_key=True, autoincrement=True)
+class Ticket(BaseModel):
+
     date_created = Column(DateTime, default=datetime.datetime.utcnow)
 
     ticket_class_id = Column(Integer, ForeignKey(TicketClass.id), nullable=False)
@@ -131,8 +133,8 @@ class Ticket(db.Model):
     seats = relationship('Seat', backref='ticket', lazy=True)
 
 
-class Seat(db.Model):
-    id = Column(Integer, primary_key=True, autoincrement=True)
+class Seat(BaseModel):
+
     seat_class = Column(Integer, nullable=False)
     is_available = Column(Boolean, default=1)
     date_created = Column(DateTime, default=datetime.datetime.utcnow)
@@ -141,8 +143,8 @@ class Seat(db.Model):
     ticket_id = Column(Integer, ForeignKey(Ticket.id), nullable=False)
 
 
-class Bill(db.Model):
-    id = Column(Integer, primary_key=True, autoincrement=True)
+class Bill(BaseModel):
+
     issueDate = Column(DateTime, nullable=False)
     total = Column(Float, nullable=False)
     is_Paid = Column(Boolean, default=False)
@@ -152,8 +154,8 @@ class Bill(db.Model):
     orders = relationship('Order', backref='bill', lazy=True)
 
 
-class Order(db.Model):
-    id = Column(Integer, primary_key=True, autoincrement=True)
+class Order(BaseModel):
+
     order_day = Column(DateTime, nullable=False)
     order_method = Column(Integer, default=1)
     date_created = Column(DateTime, default=datetime.datetime.utcnow)
@@ -163,8 +165,8 @@ class Order(db.Model):
     order_details = relationship('OrderDetail', backref='order', lazy=True)
 
 
-class OrderDetail(db.Model):
-    id = Column(Integer, primary_key=True, autoincrement=True)
+class OrderDetail(BaseModel):
+
     quantity = Column(Integer, default=1)
     unit_price = Column(Float, nullable=True)
     total = Column(Float, nullable=True)
@@ -178,10 +180,10 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
 
-        u = User(name="admin", username="admin", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
-                 avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1731852091/cld-sample-5.jpg",
-                 user_role=UserRole.ADMIN)
-        db.session.add(u)
+        # u = User(name="admin", username="admin", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+        #          avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1731852091/cld-sample-5.jpg",
+        #          user_role=UserRole.ADMIN)
+        # db.session.add(u)
 
         provinces = [{
             "name": "TP HCM"
@@ -341,7 +343,5 @@ if __name__ == '__main__':
         for detail in order_details:
             order_detail = OrderDetail(**detail)
             db.session.add(order_detail)
-
-
         db.session.commit()
 
