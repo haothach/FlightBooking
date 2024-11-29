@@ -59,29 +59,42 @@ def query_database(departure, destination, departure_date):
     cursor = conn.cursor()
     query = """
         SELECT 
-            CASE 
-                WHEN fs.first_class_ticket_price IS NOT NULL THEN 'Hạng 1'
-                ELSE 'Hạng 2'
-            END AS ticket_class,
-            TIME(fs.dep_date) AS departure_time,
-            CONCAT(FLOOR(fs.flight_time / 60), ' giờ ', MOD(fs.flight_time, 60), ' phút') AS flight_duration,
-            TIME(DATE_ADD(fs.dep_date, INTERVAL fs.flight_time MINUTE)) AS arrival_time, 
-            dep_airport.name AS departure_airport, 
-            des_airport.name AS destination_airport, 
-            a.airplane_type AS airline, 
-            fs.first_class_ticket_price AS first_class_price,
-            fs.second_class_ticket_price AS second_class_price 
-        FROM flight_schedule fs  
-        JOIN flight f ON fs.flight_id = f.id
-        JOIN flight_route fr ON f.flight_route_id = fr.id
-        JOIN airport dep_airport ON fr.dep_airport_id = dep_airport.id
-        JOIN airport des_airport ON fr.des_airport_id = des_airport.id
-        JOIN province dep_province ON dep_airport.province_id = dep_province.id -- Thêm JOIN bảng province (sân bay đi)
-        JOIN province des_province ON des_airport.province_id = des_province.id -- Thêm JOIN bảng province (sân bay đến)
-        JOIN airplane a ON f.airplane_id = a.id
-        WHERE dep_province.name = %s -- Thêm điều kiện tỉnh đi
-          AND des_province.name = %s -- Thêm điều kiện tỉnh đến
-          AND DATE(fs.dep_date) = %s
+            tc.name AS ticket_class,
+            dep_airport.name AS departure_airport,
+            des_airport.name AS destination_airport,
+            f.dep_time AS departure_time,
+            f.flight_time AS flight_duration,
+            DATE_ADD(fs.dep_time, INTERVAL f.flight_time MINUTE) AS arrival_time,
+            ap.name AS airplane_name,
+        CASE 
+            WHEN t.ticket_class_id = 1 THEN fs.first_class_ticket_price
+            WHEN t.ticket_class_id = 2 THEN fs.second_class_ticket_price
+        END AS ticket_price
+        FROM 
+            ticket t
+        JOIN 
+            flight_schedule fs ON t.flight_id = fs.flight_id
+        JOIN 
+            flight f ON fs.flight_id = f.id
+        JOIN 
+            flight_route fr ON f.flight_route_id = fr.id
+        JOIN 
+            airport dep_airport ON fr.dep_airport_id = dep_airport.id
+        JOIN 
+            airport des_airport ON fr.des_airport_id = des_airport.id
+        JOIN 
+            airplane ap ON f.airplane_id = ap.id
+        JOIN 
+            ticket_class tc ON t.ticket_class_id = tc.id
+        JOIN 
+            province dep_province ON dep_airport.province_id = dep_province.id
+        JOIN 
+            province des_province ON des_airport.province_id = des_province.id
+        WHERE 
+            dep_province.name = %s 
+            AND des_province.name = %s 
+            AND DATE(fs.dep_time) = %s;
+
     """
 
     # Thực thi truy vấn
@@ -93,15 +106,14 @@ def query_database(departure, destination, departure_date):
     # Chuyển đổi kết quả thành danh sách dictionary
     flights = [
         {
-            "ticket_class": row[0],
-            "departure_time": row[1],
-            "flight_duration": row[2],
-            "arrival_time": row[3],
-            "dep_airport_name": row[4],
-            "des_airport_name": row[5],
-            "airline": row[6],
-            "first_class_price": row[7],
-            "second_class_price": row[8],
+            "ticket_class": row[0],  # Hạng vé (ticket_class)
+            "dep_airport_name": row[1],  # Sân bay khởi hành
+            "des_airport_name": row[2],  # Sân bay đến
+            "departure_time": row[3],  # Giờ khởi hành
+            "flight_duration": row[4],  # Thời gian bay
+            "arrival_time": row[5],  # Giờ đến
+            "airplane_name": row[6],  # Tên máy bay
+            "ticket_price": row[7],  # Giá vé
         }
         for row in results
     ]

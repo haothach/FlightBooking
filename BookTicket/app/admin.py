@@ -11,23 +11,28 @@ class AuthenticatedView(ModelView):
     def is_accessible(self):
         return current_user.is_authenticated and current_user.user_role.__eq__(UserRole.ADMIN)
 
+
 class FlightRouteView(AuthenticatedView):
     form_excluded_columns = ['flights']
     column_list = ['flights']
+
 
 class FlightView(AuthenticatedView):
     can_export = True
     form_excluded_columns = ['tickets', 'flight_schedules']
 
+
 class MyView(BaseView):
     def is_accessible(self):
         return current_user.is_authenticated
+
 
 class LogoutView(MyView):
     @expose("/")
     def __index__(self):
         logout_user()
         return redirect("/admin")
+
 
 class StatsView(MyView):
     @expose("/")
