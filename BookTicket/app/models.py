@@ -192,7 +192,7 @@ if __name__ == '__main__':
         #          avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1731852091/cld-sample-5.jpg",
         #          user_role=UserRole.ADMIN)
         # db.session.add(u)
-        #
+
         # provinces = [{
         #     "name": "TP HCM"
         # }, {
@@ -258,110 +258,109 @@ if __name__ == '__main__':
         #     db.session.add(flight_route)
         #
         # # Add flights
-        # flights = [
-        #     {"dep_time": datetime.datetime(2024, 12, 1, 9, 0), "flight_time": 120, "flight_code": "VN123",
-        #      "flight_route_id": 1, "airplane_id": 1},
-        #     {"dep_time": datetime.datetime(2024, 12, 1, 14, 30), "flight_time": 90, "flight_code": "VN456",
-        #      "flight_route_id": 2, "airplane_id": 2},
-        #     {"dep_time": datetime.datetime(2024, 12, 1, 17, 15), "flight_time": 150, "flight_code": "VN789",
-        #      "flight_route_id": 3, "airplane_id": 3},
-        # ]
-        # for f in flights:
-        #     f = Flight(**f)
-        #     db.session.add(f)
-        # db.session.commit()
-        #
+        flights = [
+            {"dep_time": datetime.datetime(2024, 12, 1, 9, 0), "flight_time": 120, "flight_code": "VN123",
+             "flight_route_id": 1, "airplane_id": 1},
+            {"dep_time": datetime.datetime(2024, 12, 1, 14, 30), "flight_time": 90, "flight_code": "VN456",
+             "flight_route_id": 2, "airplane_id": 2},
+            {"dep_time": datetime.datetime(2024, 12, 1, 17, 15), "flight_time": 150, "flight_code": "VN789",
+             "flight_route_id": 3, "airplane_id": 3},
+        ]
+        for f in flights:
+            f = Flight(**f)
+            db.session.add(f)
+
+
         #
         # # Add flight schedules
-        # flight_schedules = [
-        #     {"dep_time": datetime.datetime(2024, 12, 1, 9, 0), "first_class_seat_size": 20,
-        #      "first_class_ticket_price": 500000, "second_class_seat_size": 100, "second_class_ticket_price": 200000,
-        #      "flight_id": 1},
-        #     {"dep_time": datetime.datetime(2024, 12, 1, 14, 30), "first_class_seat_size": 15,
-        #      "first_class_ticket_price": 450000, "second_class_seat_size": 80, "second_class_ticket_price": 180000,
-        #      "flight_id": 2},
-        #     {"dep_time": datetime.datetime(2024, 12, 1, 17, 15), "first_class_seat_size": 10,
-        #      "first_class_ticket_price": 550000, "second_class_seat_size": 120, "second_class_ticket_price": 220000,
-        #      "flight_id": 3},
-        # ]
-        # for fs in flight_schedules:
-        #     fs = FlightSchedule(**fs)
-        #     db.session.add(fs)
-        # db.session.commit()
+        flight_schedules = [
+            {"dep_time": datetime.datetime(2024, 12, 1, 9, 0), "first_class_seat_size": 20,
+             "first_class_ticket_price": 500000, "second_class_seat_size": 100, "second_class_ticket_price": 200000,
+             "flight_id": 1},
+            {"dep_time": datetime.datetime(2024, 12, 1, 14, 30), "first_class_seat_size": 15,
+             "first_class_ticket_price": 450000, "second_class_seat_size": 80, "second_class_ticket_price": 180000,
+             "flight_id": 2},
+            {"dep_time": datetime.datetime(2024, 12, 1, 17, 15), "first_class_seat_size": 10,
+             "first_class_ticket_price": 550000, "second_class_seat_size": 120, "second_class_ticket_price": 220000,
+             "flight_id": 3},
+        ]
+        for fs in flight_schedules:
+            fs = FlightSchedule(**fs)
+            db.session.add(fs)
+
         #
-        # #
-        # # # Add intermediate airports
-        # intermediate_airports = [
-        #     {"airport_id": 2, "flight_route_id": 1, "stop_time": 30, "note": "Refueling stop"},
-        #     {"airport_id": 3, "flight_route_id": 2, "stop_time": 25, "note": "Passenger exchange"},
-        #     {"airport_id": 4, "flight_route_id": 3, "stop_time": 20, "note": "Technical stop"},
-        # ]
-        # for ia in intermediate_airports:
-        #     ia = IntermediateAirport(**ia)
-        #     db.session.add(ia)
-        #
-        #
-        # # Add ticket classes
-        # ticket_classes = [
-        #     {"name": "First Class"},
-        #     {"name": "Second Class"},
-        # ]
-        # for tc in ticket_classes:
-        #     tc = TicketClass(**tc)
-        #     db.session.add(tc)
-        #
-        # # Add tickets
-        # tickets = [
-        #     {"ticket_class_id": 1, "flight_id": 1},
-        #     {"ticket_class_id": 2, "flight_id": 1},
-        #     {"ticket_class_id": 1, "flight_id": 2},
-        #     {"ticket_class_id": 2, "flight_id": 2},
-        # ]
-        # for t in tickets:
-        #     t = Ticket(**t)
-        #     db.session.add(t)
-        #
-        # # Add seats
-        # seats = [
-        #     {"seat_class": 1, "is_available": True, "airplane_id": 1, "ticket_id": 1},
-        #     {"seat_class": 2, "is_available": True, "airplane_id": 1, "ticket_id": 2},
-        #     {"seat_class": 1, "is_available": True, "airplane_id": 2, "ticket_id": 3},
-        #     {"seat_class": 2, "is_available": True, "airplane_id": 2, "ticket_id": 4},
-        # ]
-        # for s in seats:
-        #     s = Seat(**s)
-        #     db.session.add(s)
-        #
-        # # Add bills
-        # bills = [
-        #     {"issueDate": datetime.datetime(2024, 11, 30), "total": 600, "is_Paid": True,
-        #      "note": "Paid via credit card"},
-        #     {"issueDate": datetime.datetime(2024, 11, 29), "total": 400, "is_Paid": False,
-        #      "note": "Pending payment"},
-        # ]
-        # for b in bills:
-        #     b = Bill(**b)
-        #     db.session.add(b)
-        #
-        # # Add orders
-        # orders = [
-        #     {"order_day": datetime.datetime(2024, 11, 28), "order_method": 1, "bill_id": 1},
-        #     {"order_day": datetime.datetime(2024, 11, 27), "order_method": 2, "bill_id": 2},
-        # ]
-        # for o in orders:
-        #     o = Order(**o)
-        #     db.session.add(o)
-        #
-        # # Add order details
-        # order_details = [
-        #     {"quantity": 2, "unit_price": 150, "total": 300, "ticket_id": 1, "order_id": 1},
-        #     {"quantity": 1, "unit_price": 100, "total": 100, "ticket_id": 2, "order_id": 1},
-        #     {"quantity": 1, "unit_price": 200, "total": 200, "ticket_id": 3, "order_id": 2},
-        # ]
-        #
-        #
-        # for od in order_details:
-        #     od = OrderDetail(**od)
-        #     db.session.add(od)
-        #
-        # db.session.commit()
+        # # Add intermediate airports
+        intermediate_airports = [
+            {"airport_id": 2, "flight_route_id": 1, "stop_time": 30, "note": "Refueling stop"},
+            {"airport_id": 3, "flight_route_id": 2, "stop_time": 25, "note": "Passenger exchange"},
+            {"airport_id": 4, "flight_route_id": 3, "stop_time": 20, "note": "Technical stop"},
+        ]
+        for ia in intermediate_airports:
+            ia = IntermediateAirport(**ia)
+            db.session.add(ia)
+
+
+        # Add ticket classes
+        ticket_classes = [
+            {"name": "First Class"},
+            {"name": "Second Class"},
+        ]
+        for tc in ticket_classes:
+            tc = TicketClass(**tc)
+            db.session.add(tc)
+
+        # Add tickets
+        tickets = [
+            {"ticket_class_id": 1, "flight_id": 1},
+            {"ticket_class_id": 2, "flight_id": 1},
+            {"ticket_class_id": 1, "flight_id": 2},
+            {"ticket_class_id": 2, "flight_id": 2},
+        ]
+        for t in tickets:
+            t = Ticket(**t)
+            db.session.add(t)
+
+        # Add seats
+        seats = [
+            {"seat_class": 1, "is_available": True, "airplane_id": 1, "ticket_id": 1},
+            {"seat_class": 2, "is_available": True, "airplane_id": 1, "ticket_id": 2},
+            {"seat_class": 1, "is_available": True, "airplane_id": 2, "ticket_id": 3},
+            {"seat_class": 2, "is_available": True, "airplane_id": 2, "ticket_id": 4},
+        ]
+        for s in seats:
+            s = Seat(**s)
+            db.session.add(s)
+
+        # Add bills
+        bills = [
+            {"issueDate": datetime.datetime(2024, 11, 30), "total": 600, "is_Paid": True,
+             "note": "Paid via credit card"},
+            {"issueDate": datetime.datetime(2024, 11, 29), "total": 400, "is_Paid": False,
+             "note": "Pending payment"},
+        ]
+        for b in bills:
+            b = Bill(**b)
+            db.session.add(b)
+
+        # Add orders
+        orders = [
+            {"order_day": datetime.datetime(2024, 11, 28), "order_method": 1, "bill_id": 1},
+            {"order_day": datetime.datetime(2024, 11, 27), "order_method": 2, "bill_id": 2},
+        ]
+        for o in orders:
+            o = Order(**o)
+            db.session.add(o)
+
+        # Add order details
+        order_details = [
+            {"quantity": 2, "unit_price": 150, "total": 300, "ticket_id": 1, "order_id": 1},
+            {"quantity": 1, "unit_price": 100, "total": 100, "ticket_id": 2, "order_id": 1},
+            {"quantity": 1, "unit_price": 200, "total": 200, "ticket_id": 3, "order_id": 2},
+        ]
+
+
+        for od in order_details:
+            od = OrderDetail(**od)
+            db.session.add(od)
+
+        db.session.commit()

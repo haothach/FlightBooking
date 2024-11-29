@@ -13,8 +13,10 @@ class AuthenticatedView(ModelView):
 
 
 class FlightRouteView(AuthenticatedView):
-    form_excluded_columns = ['flights']
-    column_list = ['flights']
+    can_export = True
+    column_list = ['dep_airport', 'des_airport', 'flights']  # Thêm các cột liên quan đến sân bay khởi hành và đến
+    can_view_details = True
+
 
 
 class FlightView(AuthenticatedView):
