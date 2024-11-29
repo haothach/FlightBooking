@@ -12,8 +12,10 @@ class AuthenticatedView(ModelView):
         return current_user.is_authenticated and current_user.user_role.__eq__(UserRole.ADMIN)
 
 class FlightRouteView(AuthenticatedView):
-    form_excluded_columns = ['flights']
-    column_list = ['flights']
+    can_export = True
+    column_list = ['dep_airport', 'des_airport', 'flights']  # Thêm các cột liên quan đến sân bay khởi hành và đến
+    can_view_details = True
+
 
 class FlightView(AuthenticatedView):
     can_export = True

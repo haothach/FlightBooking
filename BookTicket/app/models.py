@@ -10,10 +10,11 @@ import datetime
 
 from flask_login import UserMixin
 
+
 class BaseModel(db.Model):
-    __abstract__=True
+    __abstract__ = True
     id = Column(Integer, primary_key=True, autoincrement=True)
-    #Các id ở dưới kế thừa từ basemodel
+    # Các id ở dưới kế thừa từ basemodel
 
 
 class UserRole(RoleEnum):
@@ -29,7 +30,6 @@ class Airline(AirlineEnum):
 
 
 class User(BaseModel, UserMixin):
-
     name = Column(String(100), nullable=False)
     username = Column(String(100), nullable=False, unique=True)
     password = Column(String(100), nullable=False)
@@ -48,7 +48,6 @@ class Province(BaseModel):
 
 
 class Airport(BaseModel):
-
     name = Column(String(100), nullable=False)
     add = Column(String(100), nullable=False)
     province_id = Column(Integer, ForeignKey(Province.id), nullable=False)
@@ -62,27 +61,37 @@ class Airport(BaseModel):
 
 
 class FlightRoute(BaseModel):
-
     dep_airport_id = Column(Integer, ForeignKey(Airport.id), nullable=False)
     des_airport_id = Column(Integer, ForeignKey(Airport.id), nullable=False)
 
     flights = relationship('Flight', backref='flight_route', lazy=True)
 
-    @validates('des_airport_id')
-    def validate_airports(self, key, des_airport_id):
-        if des_airport_id == self.dep_airport_id:
+    @validates('dep_airport_id', 'des_airport_id')
+    def validate_airports_and_duplicates(self, key, value):
+        # Nếu kiểm tra 'des_airport_id', đảm bảo sân bay đi và đến không trùng nhau
+        if key == 'des_airport_id' and value == self.dep_airport_id:
             raise ValueError("Departure and destination airports must be different.")
-        return des_airport_id
+
+        # Kiểm tra trùng lặp tuyến bay
+        existing_route = FlightRoute.query.filter_by(
+            dep_airport_id=self.dep_airport_id if key != 'dep_airport_id' else value,
+            des_airport_id=self.des_airport_id if key != 'des_airport_id' else value
+        ).first()
+
+        if existing_route and existing_route.id != self.id:
+            raise ValueError("This flight route already exists.")
+
+        return value
 
     def __str__(self):
         dep_airport_name = self.dep_airport.name
         des_airport_name = self.des_airport.name
-        return f"{dep_airport_name} -> {des_airport_name}"
-
+        dep_province_name = self.dep_airport.province.name
+        des_province_name = self.des_airport.province.name
+        return f"{dep_province_name} ({dep_airport_name}) -> {des_province_name} ({des_airport_name})"
 
 
 class Airplane(BaseModel):
-
     name = Column(String(100), nullable=False)
     airplane_type = Column(Enum(Airline), nullable=False)
     capacity = Column(Integer, nullable=False)
@@ -95,20 +104,19 @@ class Airplane(BaseModel):
 
 
 class Flight(BaseModel):
-
     flight_code = Column(String(20), nullable=False)
+
     flight_route_id = Column(Integer, ForeignKey(FlightRoute.id), nullable=False)
     airplane_id = Column(Integer, ForeignKey(Airplane.id), nullable=False)
 
     flight_schedules = relationship('FlightSchedule', backref='flight', lazy=True)
-    tickets = relationship('Ticket', backref='ticket', lazy=True)
+    tickets = relationship('Ticket', backref='flight', lazy=True)
 
     def __str__(self):
         return self.flight_code
 
 
 class FlightSchedule(BaseModel):
-
     dep_date = Column(DateTime, nullable=False)
     flight_time = Column(Integer, nullable=False)
     first_class_seat_size = Column(Integer, nullable=False)
@@ -127,15 +135,12 @@ class IntermediateAirport(db.Model):
     stop_time = Column(Integer, default=20)
     note = Column(String(100), nullable=True)
 
-
 class TicketClass(BaseModel):
-
     name = Column(String(50), nullable=False)
     tickets = relationship('Ticket', backref='TicketClass', lazy=True)
 
 
 class Ticket(BaseModel):
-
     date_created = Column(DateTime, default=datetime.datetime.utcnow)
 
     ticket_class_id = Column(Integer, ForeignKey(TicketClass.id), nullable=False)
@@ -146,7 +151,6 @@ class Ticket(BaseModel):
 
 
 class Seat(BaseModel):
-
     seat_class = Column(Integer, nullable=False)
     is_available = Column(Boolean, default=1)
 
@@ -155,7 +159,6 @@ class Seat(BaseModel):
 
 
 class Bill(BaseModel):
-
     issueDate = Column(DateTime, nullable=False)
     total = Column(Float, nullable=False)
     is_Paid = Column(Boolean, default=False)
@@ -166,7 +169,6 @@ class Bill(BaseModel):
 
 
 class Order(BaseModel):
-
     order_day = Column(DateTime, nullable=False)
     order_method = Column(Integer, default=1)
     date_created = Column(DateTime, default=datetime.datetime.utcnow)
@@ -177,7 +179,6 @@ class Order(BaseModel):
 
 
 class OrderDetail(BaseModel):
-
     quantity = Column(Integer, default=1)
     unit_price = Column(Float, nullable=True)
     total = Column(Float, nullable=True)
@@ -186,14 +187,26 @@ class OrderDetail(BaseModel):
     order_id = Column(Integer, ForeignKey(Order.id), nullable=False)
 
 
+class Policy(BaseModel):
+    numberAirport = Column(Integer, nullable=False)
+    minimumFlightTime = Column(Integer, nullable=False)
+    maxIntermediateAirports = Column(Integer, nullable=False)
+    minStopTime = Column(Integer, nullable=False)
+    maxStopTime = Column(Integer, nullable=False)
+    numTicketClasses = Column(Integer, nullable=False)
+    ticketPrice = Column(Integer, nullable=False)
+    ticketSaleTime = Column(Integer, nullable=False)
+    ticketBookingTime = Column(Integer, nullable=False)
+
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
 
-        # u = User(name="admin", username="admin", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
-        #          avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1731852091/cld-sample-5.jpg",
-        #          user_role=UserRole.ADMIN)
-        # db.session.add(u)
+        u = User(name="admin", username="admin", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+                 avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1731852091/cld-sample-5.jpg",
+                 user_role=UserRole.ADMIN)
+        db.session.add(u)
 
         provinces = [{
             "name": "TP HCM"
@@ -287,9 +300,9 @@ if __name__ == '__main__':
 
         # Add intermediate airports
         intermediate_airports = [
-            {"airport_id": 3, "flight_schedule_id": 1, "stop_time": 30, "note": "Fuel stop"},
-            {"airport_id": 4, "flight_schedule_id": 2, "stop_time": 45, "note": "Crew change"},
-            {"airport_id": 5, "flight_schedule_id": 3, "stop_time": 60, "note": "Technical inspection"},
+            {"airport_id": 4, "flight_schedule_id": 1, "stop_time": 30, "note": "Fuel stop"},
+            {"airport_id": 5, "flight_schedule_id": 2, "stop_time": 45, "note": "Crew change"},
+            {"airport_id": 4, "flight_schedule_id": 3, "stop_time": 60, "note": "Technical inspection"},
         ]
         for ia in intermediate_airports:
             ia = IntermediateAirport(**ia)
@@ -353,9 +366,23 @@ if __name__ == '__main__':
             {"quantity": 1, "unit_price": 200, "total": 200, "ticket_id": 3, "order_id": 2},
         ]
 
-
         for od in order_details:
             od = OrderDetail(**od)
             db.session.add(od)
+
+        new_policy = Policy(
+            numberAirport=10,  # Số lượng sân bay tối đa
+            minimumFlightTime=30,  # Thời gian bay tối thiểu 30 phút
+            maxIntermediateAirports=2,  # Số sân bay trung gian tối đa
+            minStopTime=20,  # Thời gian dừng tối thiểu tại sân bay trung gian
+            maxStopTime=30,  # Thời gian dừng tối đa tại sân bay trung gian
+            numTicketClasses=2,  # Số hạng vé (2 hạng vé)
+            ticketPrice=1000,  # Giá vé (ví dụ: 1000 là đơn vị tiền tệ)
+            ticketSaleTime=1440,  # Thời gian bán vé (ví dụ: 1440 phút = 1 ngày)
+            ticketBookingTime=240,  # Thời gian đặt vé (ví dụ: 240 phút = 4 giờ trước khi chuyến bay)
+        )
+
+        # Thêm vào session và commit
+        db.session.add(new_policy)
 
         db.session.commit()
