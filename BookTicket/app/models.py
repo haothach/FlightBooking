@@ -146,6 +146,7 @@ class IntermediateAirport(db.Model):
 class Ticket(BaseModel):
 
     date_created = Column(DateTime, default=datetime.datetime.utcnow)
+    ticket_class = Column(Enum(TicketClass), nullable=False)
 
     flight_id = Column(Integer, ForeignKey(Flight.id), nullable=False)
 
@@ -213,7 +214,7 @@ if __name__ == '__main__':
         #          avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1731852091/cld-sample-5.jpg",
         #          user_role=UserRole.ADMIN)
         # db.session.add(u)
-
+        # db.session.commit()
         # provinces = [{
         #     "name": "TP HCM"
         # }, {
@@ -252,7 +253,7 @@ if __name__ == '__main__':
         #     {"name": "Liên Khương", "add": "Xã Liên Nghĩa, Huyện Đức Trọng, Lâm Đồng", "province_id": 7},
         #     {"name": "Vân Đồn", "add": "Số 28 đường Vân Đồn, Quảng Ninh", "province_id": 8},
         #     {"name": "Long Thành", "add": "Xã Long Thanh, Huyện Long Thành, tỉnh Đồng Nai", "province_id": 9},
-        #     {"name": "Los Angeles", "add": "America", "province_id": 11},
+        #     {"name": "Los Angeles", "add": "America", "province_id": 10},
         # ]
         #
         # for a in airports:
@@ -273,21 +274,22 @@ if __name__ == '__main__':
         #     airplane = Airplane(**a)
         #     db.session.add(airplane)
         # db.session.commit()
-        # Thêm dữ liệu vào bảng FlightRoute
+        # # Thêm dữ liệu vào bảng FlightRoute
         # flight_routes = [
         #     {"dep_airport_id": 1, "des_airport_id": 2},  # Tân Sơn Nhất -> Nội Bài
         #     {"dep_airport_id": 2, "des_airport_id": 3},  # Nội Bài -> Đà Nẵng
         #     {"dep_airport_id": 3, "des_airport_id": 4},  # Đà Nẵng -> Vinh
         #     {"dep_airport_id": 1, "des_airport_id": 5},  # Tân Sơn Nhất -> Cần Thơ
+        #     {"dep_airport_id": 1, "des_airport_id": 10},
         # ]
-        #
+        # #
         # for route in flight_routes:
         #     flight_route = FlightRoute(**route)
         #     db.session.add(flight_route)
         # db.session.commit()
-        # Thêm dữ liệu vào bảng Flight
+        # # Thêm dữ liệu vào bảng Flight
         # flights = [
-        #     {"flight_code": "VN 216", "flight_route_id": 1, "airplane_id": 1},
+        #     {"flight_code": "VN 216", "flight_route_id": 5, "airplane_id": 1},
         #     {"flight_code": "VN 157", "flight_route_id": 2, "airplane_id": 2},
         #     {"flight_code": "VN789", "flight_route_id": 3, "airplane_id": 3},
         # ]
@@ -295,9 +297,9 @@ if __name__ == '__main__':
         # for flight in flights:
         #     flight_obj = Flight(**flight)
         #     db.session.add(flight_obj)
-
-        # Thêm dữ liệu vào bảng FlightSchedule
-
+        # db.session.commit()
+        # # Thêm dữ liệu vào bảng FlightSchedule
+        #
         # flight_schedules = [
         #     {
         #         "dep_time": datetime.datetime(2024, 12, 3, 8, 0),
@@ -307,35 +309,35 @@ if __name__ == '__main__':
         #         "flight_id": 1,
         #     },
         #     {
-        #         "dep_time": datetime.datetime(2024, 12, 3, 14, 0),
-        #         "flight_time": 90,
-        #         "first_class_seat_size": 8,
+        #         "dep_time": datetime.datetime(2024, 12, 20, 16, 50),
+        #         "flight_time": 1065,
         #         "first_class_ticket_price": 1800000,
-        #         "second_class_seat_size": 40,
         #         "second_class_ticket_price": 800000,
-        #         "flight_id": 2,
+        #         "flight_id": 3,
         #     },
         # ]
         #
         # for schedule in flight_schedules:
         #     flight_schedule = FlightSchedule(**schedule)
         #     db.session.add(flight_schedule)
-
-        # Thêm dữ liệu vào bảng IntermediateAirport
+        # db.session.commit()
+        # # Thêm dữ liệu vào bảng IntermediateAirport
         # intermediate_airports = [
-        #     {"airport_id": 3, "flight_id": 1, "stop_time": 30, "note": "Transit in Đà Nẵng"},
-        #     {"airport_id": 4, "flight_id": 2, "stop_time": 20, "note": "Transit in Vinh"},
+        #     {"airport_id": 2, "flight_id": 3, "stop_time": 160, "note": "Transit in Ha Noi"},
         # ]
         #
         # for intermediate in intermediate_airports:
         #     inter_airport = IntermediateAirport(**intermediate)
         #     db.session.add(inter_airport)
-
-        # Thêm dữ liệu vào bảng Ticket
+        # db.session.commit()
+        # # Thêm dữ liệu vào bảng Ticket
         # tickets = [
-        #     {"ticket_class_id": 1, "flight_id": 1},
-        #     {"ticket_class_id": 2, "flight_id": 1},
-        #     {"ticket_class_id": 1, "flight_id": 2},
+        #     {"flight_id": 1, "ticket_class": TicketClass.Economy_Class},
+        #     {"flight_id": 1, "ticket_class": TicketClass.Business_Class},
+        #     {"flight_id": 2, "ticket_class": TicketClass.Economy_Class},
+        #     {"flight_id": 2, "ticket_class": TicketClass.Business_Class},
+        #     {"flight_id": 3, "ticket_class": TicketClass.Economy_Class},
+        #     {"flight_id": 3, "ticket_class": TicketClass.Business_Class},
         # ]
         #
         # for ticket in tickets:
@@ -375,8 +377,8 @@ if __name__ == '__main__':
         #     db.session.add(order_detail)
         #
         # db.session.commit()
-
-        # Thêm dữ liệu vào bảng Seat
+        #
+        # #Thêm dữ liệu vào bảng Seat
         # seats = [
         #     {"seat_class": 1, "is_available": True, "airplane_id": 1, "ticket_id": 1},  # Ghế phổ thông
         #     {"seat_class": 2, "is_available": False, "airplane_id": 1, "ticket_id": 1},  # Ghế thương gia
@@ -386,9 +388,6 @@ if __name__ == '__main__':
         # for seat in seats:
         #     seat_obj = Seat(**seat)
         #     db.session.add(seat_obj)
-        #
-        db.session.commit()
-        #
         #
         # new_policy = Policy(
         #     numberAirport=10,  # Số lượng sân bay tối đa

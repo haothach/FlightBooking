@@ -1,19 +1,9 @@
-import math
-import sqlite3
-
-import sqlalchemy
 from flask import render_template, request, redirect
 import dao
 from app import app, login
 from flask_login import login_user, logout_user
-from datetime import datetime
-
 from app.models import UserRole
 
-
-# @app.route("/")
-# def index():
-#     return render_template("index.html")
 
 @app.route("/")
 def index():
@@ -31,7 +21,7 @@ def search():
     departure_date = request.args.get('departure-date')
     passenger = request.args.get('passengers')
 
-    flights = dao.query_database(departure, destination, departure_date)
+    flights = dao.load_flights(departure, destination, departure_date)
 
     return render_template('search.html', departure=departure, destination=destination,
                            departure_date=departure_date, passenger=passenger, flights=flights)
@@ -69,6 +59,7 @@ def login_view():
 
     return render_template('login.html')
 
+
 @app.route("/login-admin", methods=['post'])
 def login_admin_view():
         username = request.form.get('username')
@@ -77,7 +68,6 @@ def login_admin_view():
         if user:
             login_user(user=user)
             return redirect('/admin')
-
 
 
 @app.route('/logout')

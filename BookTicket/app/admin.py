@@ -18,7 +18,6 @@ class FlightRouteView(AuthenticatedView):
     can_view_details = True
 
 
-
 class FlightView(AuthenticatedView):
     can_export = True
     form_excluded_columns = ['tickets', 'flight_schedules']
@@ -43,6 +42,7 @@ class StatsView(MyView):
 
 
 admin = Admin(app, name='bookticket', template_mode='bootstrap4')
+
 admin.add_view(FlightRouteView(FlightRoute, db.session))
 admin.add_view(FlightView(Flight, db.session))
 admin.add_view(StatsView(name="Report"))
