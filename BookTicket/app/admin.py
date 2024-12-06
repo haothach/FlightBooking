@@ -2,7 +2,7 @@ from flask_sqlalchemy.model import Model
 from app import db, app
 from flask_admin import Admin, BaseView, expose
 from flask_admin.contrib.sqla import ModelView
-from app.models import Flight, FlightRoute, User, UserRole
+from app.models import Flight, FlightRoute, User, UserRole, IntermediateAirport
 from flask_login import current_user, logout_user
 from flask import redirect
 
@@ -14,13 +14,15 @@ class AuthenticatedView(ModelView):
 
 class FlightRouteView(AuthenticatedView):
     can_export = True
-    column_list = ['dep_airport', 'des_airport', 'flights']  # Thêm các cột liên quan đến sân bay khởi hành và đến
     can_view_details = True
+    # form_columns = ['dep_airport_id', 'des_airport_id']
+    column_list = ['dep_airport', 'des_airport', 'flights']
 
 
 class FlightView(AuthenticatedView):
     can_export = True
-    form_excluded_columns = ['tickets', 'flight_schedules']
+    column_list = ['flight_code', 'flight_route', 'inter_airports']
+    form_excluded_columns = ['flight_schedules', 'tickets']
 
 
 class MyView(BaseView):

@@ -62,12 +62,13 @@ def login_view():
 
 @app.route("/login-admin", methods=['post'])
 def login_admin_view():
-        username = request.form.get('username')
-        password = request.form.get('password')
-        user = dao.auth_user(username=username, password=password, role=UserRole.ADMIN)
-        if user:
-            login_user(user=user)
-            return redirect('/admin')
+    username = request.form.get('username')
+    password = request.form.get('password')
+
+    user = dao.auth_user(username=username, password=password, role=UserRole.ADMIN)
+    if user:
+        login_user(user)
+    return redirect('/admin')
 
 
 @app.route('/logout')
