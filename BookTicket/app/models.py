@@ -211,7 +211,7 @@ class Policy(BaseModel):
 
 if __name__ == '__main__':
     with app.app_context():
-        # db.create_all()
+        db.create_all()
 
         u = User(name="admin", username="admin", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
                  avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1731852091/cld-sample-5.jpg",
@@ -238,8 +238,6 @@ if __name__ == '__main__':
             "name": "Khánh Hòa"
         }, {
             "name": "Bình Dương"
-        },{
-            "name": "Mỹ"
         }]
 
         for p in provinces:
@@ -256,7 +254,6 @@ if __name__ == '__main__':
             {"name": "Liên Khương", "add": "Xã Liên Nghĩa, Huyện Đức Trọng, Lâm Đồng", "province_id": 7},
             {"name": "Vân Đồn", "add": "Số 28 đường Vân Đồn, Quảng Ninh", "province_id": 8},
             {"name": "Long Thành", "add": "Xã Long Thanh, Huyện Long Thành, tỉnh Đồng Nai", "province_id": 9},
-            {"name": "Los Angeles", "add": "America", "province_id": 10},
         ]
 
         for a in airports:
@@ -277,22 +274,20 @@ if __name__ == '__main__':
             airplane = Airplane(**a)
             db.session.add(airplane)
 
-        # Thêm dữ liệu vào bảng FlightRoute
         flight_routes = [
             {"dep_airport_id": 1, "des_airport_id": 2},  # Tân Sơn Nhất -> Nội Bài
             {"dep_airport_id": 2, "des_airport_id": 3},  # Nội Bài -> Đà Nẵng
             {"dep_airport_id": 3, "des_airport_id": 4},  # Đà Nẵng -> Vinh
             {"dep_airport_id": 1, "des_airport_id": 5},  # Tân Sơn Nhất -> Cần Thơ
-            {"dep_airport_id": 1, "des_airport_id": 10},
         ]
-        #
+
         for route in flight_routes:
             flight_route = FlightRoute(**route)
             db.session.add(flight_route)
 
         # Thêm dữ liệu vào bảng Flight
         flights = [
-            {"flight_code": "VN 216", "flight_route_id": 5, "airplane_id": 1},
+            {"flight_code": "VN 216", "flight_route_id": 1, "airplane_id": 1},
             {"flight_code": "VN 157", "flight_route_id": 2, "airplane_id": 2},
             {"flight_code": "VN789", "flight_route_id": 3, "airplane_id": 3},
         ]

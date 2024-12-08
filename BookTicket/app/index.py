@@ -1,3 +1,6 @@
+import hashlib
+import string
+
 from flask import render_template, request, redirect
 import dao
 from app import app, login
@@ -47,7 +50,7 @@ def register_view():
     return render_template('register.html', err_msg=err_msg)
 
 
-@app.route("/login", methods=['get', 'post'])
+@app.route("/login", methods=['post', 'get'])
 def login_view():
     if request.method.__eq__('POST'):
         username = request.form.get('username')
@@ -56,8 +59,7 @@ def login_view():
         if user:
             login_user(user=user)
             return redirect('/')
-
-    return render_template('login.html')
+    return render_template("login.html")
 
 
 @app.route("/login-admin", methods=['post'])

@@ -6,7 +6,7 @@ import sqlite3, pymysql
 
 
 def load_province():
-    return Province.query.order_by('id').all()
+    return Province.query.order_by('name').all()
 
 
 def load_flight_route():
@@ -81,11 +81,11 @@ def load_flights(departure, destination, departure_date):
                 WHEN t.ticket_class = 2 THEN fs.second_class_ticket_price  -- Giá vé hạng phổ thông
             END AS ticket_price  -- Giá vé
         FROM 
-            ticket t
-        JOIN 
-            flight_schedule fs ON t.flight_id = fs.flight_id
+            flight_schedule fs
         JOIN 
             flight f ON fs.flight_id = f.id
+        JOIN 
+            ticket t ON f.id = t.flight_id
         JOIN 
             flight_route fr ON f.flight_route_id = fr.id
         JOIN 
@@ -94,9 +94,13 @@ def load_flights(departure, destination, departure_date):
             airport des_airport ON fr.des_airport_id = des_airport.id
         JOIN 
             airplane ap ON f.airplane_id = ap.id
+        JOIN 
+            province dep_province ON dep_airport.province_id = dep_province.id
+        JOIN 
+            province des_province ON des_airport.province_id = des_province.id
         WHERE 
-            dep_airport.name = %s  -- Tên sân bay đi
-            AND des_airport.name = %s  -- Tên sân bay đến
+            dep_province.name = %s  -- Tên sân bay đi
+            AND des_province.name = %s  -- Tên sân bay đến
             AND DATE(fs.dep_time) = %s;  -- Ngày khởi hành
     """
 

@@ -60,12 +60,19 @@
             </div>
 
             <!-- Passengers -->
+
+
             <div class="col-md-6">
                 <label for="passengers" class="form-label">Số hành khách</label>
-                <select class="form-select" id="passengers" name="passengers">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                </select>
+                <input
+                        type="number"
+                        class="form-control"
+                        id="passengers"
+                        name="passengers"
+                        min="1"
+                        max="10"
+                        value="1"
+                        step="1">
             </div>
         </div>
 
