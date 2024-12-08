@@ -91,21 +91,25 @@
             <div class="flight-item d-flex justify-content-between align-items-center border p-3 mb-3">
                 <!-- Thông tin chuyến bay -->
                 <div class="text-center">
-                    <p class="fw-bold fs-5 mb-1">Hạng vé</p>
+                    <p class="fw-bold fs-8 mb-1">Hạng vé</p>
                     <span class="badge bg-primary">{{ f.ticket_class }}</span>
                 </div>
                 <div class="text-center">
-                    <p class="fw-bold fs-5 mt-3 mb-1">Thời gian</p>
-                    <span>{{ f.flight_time }}</span>
-                </div>
-                <div class="text-center">
-                    <p class="fw-bold fs-5 mb-1">Lộ trình</p>
-                    <p class="mb-0 fw-bold fs-7">{{ f.departure_airport }} → {{ f.destination_airport }}</p>
+                    <p class="fw-bold fs-8 mb-1">Giờ bay</p>
 
                 </div>
                 <div class="text-center">
-                    <p class="fw-bold fs-5 mb-1">Giá vé</p>
-                    <p class="mb-0 fw-bold fs-4 text-danger">{{"{:,.0f}".format( f.ticket_price )}} VND</p>
+                    <p class="fw-bold fs-8 mt-` mb-1">Thời gian</p>
+                    <span class="mb-0 fw-bold fs-6">{{ f.flight_time }}</span>
+                </div>
+                <div class="text-center">
+                    <p class="fw-bold fs-8 mb-1">Lộ trình</p>
+                    <p class="mb-0 fw-bold fs-6">{{ f.departure_airport }} → {{ f.destination_airport }}</p>
+
+                </div>
+                <div class="text-center">
+                    <p class="fw-bold fs-8 mb-1">Giá vé</p>
+                    <p class="mb-0 fw-bold fs-6 text-danger">{{"{:,.0f}".format( f.ticket_price )}} VND</p>
                 </div>
                 <div class="text-center">
                     <button class="btn btn-danger mt-2">Chọn</button>
