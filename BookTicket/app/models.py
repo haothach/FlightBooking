@@ -1,7 +1,7 @@
 from email.policy import default
 
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Enum, Date, DateTime
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy.orm import relationship, validates, backref
 from app import db, app
 import hashlib
 from enum import Enum as RoleEnum
@@ -43,6 +43,9 @@ class User(BaseModel, UserMixin):
     avatar = Column(String(100), nullable=True)
     active = Column(Boolean, default=True)
     user_role = Column(Enum(UserRole), default=UserRole.USER)
+
+    orders = relationship('Order', backref('user'), lazy=True)
+
 
 
 class Province(BaseModel):
@@ -182,6 +185,7 @@ class Order(BaseModel):
     order_day = Column(DateTime, nullable=False)
     order_method = Column(Integer, default=1)
     date_created = Column(DateTime, default=datetime.datetime.utcnow)
+    cus_id = Column(User, ForeignKey(User.id), nullable=False)
 
     bill_id = Column(Integer, ForeignKey(Bill.id), nullable=False)
     order_details = relationship('OrderDetail', backref='order', lazy=True)
@@ -369,48 +373,6 @@ if __name__ == '__main__':
         #     {"flight_id": 3, "ticket_class": TicketClass.Economy_Class},
         #     {"flight_id": 3, "ticket_class": TicketClass.Business_Class},
         # ]
-        tickets = [
-            {"flight_id": 8, "ticket_class": TicketClass.Economy_Class},
-            {"flight_id": 8, "ticket_class": TicketClass.Business_Class}
-        ]
-        #
-        for ticket in tickets:
-            ticket_obj = Ticket(**ticket)
-            db.session.add(ticket_obj)
-
-        #
-        # # Thêm dữ liệu vào bảng Bill
-        # bills = [
-        #     {"issueDate": datetime.datetime(2024, 12, 3), "total": 3000000, "is_Paid": True},
-        # ]
-        #
-        # for bill in bills:
-        #     bill_obj = Bill(**bill)
-        #     db.session.add(bill_obj)
-        #
-        #
-        #
-        # # Thêm dữ liệu vào bảng Order
-        # orders = [
-        #     {"order_day": datetime.datetime(2024, 12, 3), "bill_id": 1},
-        # ]
-        #
-        # for order in orders:
-        #     order_obj = Order(**order)
-        #     db.session.add(order_obj)
-        #
-        #
-        #
-        # # Thêm dữ liệu vào bảng OrderDetail
-        # order_details = [
-        #     {"quantity": 2, "unit_price": 1000000, "total": 2000000, "ticket_id": 1, "order_id": 1},
-        # ]
-        #
-        # for detail in order_details:
-        #     order_detail = OrderDetail(**detail)
-        #     db.session.add(order_detail)
-        #
-        #
         #
         # #Thêm dữ liệu vào bảng Seat
         # seats = [
