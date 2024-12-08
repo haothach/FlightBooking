@@ -8,13 +8,15 @@ from flask_login import login_user, logout_user
 from app.models import UserRole
 
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def index():
+
     provinces = dao.load_province()
     departure = request.args.get('departure')
     destination = request.args.get('destination')
-    return render_template('index.html', provinces=provinces,
-                           destination=destination, departure=departure)
+
+    return render_template('index.html', provinces=provinces)
+
 
 
 @app.route("/search")

@@ -21,8 +21,8 @@ class FlightRouteView(AuthenticatedView):
 
 class FlightView(AuthenticatedView):
     can_export = True
-    column_list = ['flight_code', 'flight_route', 'inter_airports']
-    form_excluded_columns = ['flight_schedules', 'tickets']
+    # column_list = ['flight_code', 'flight_route', 'airplane']
+    form_excluded_columns = ['flight_schedules', 'tickets', 'inter_airports']
 
 
 class MyView(BaseView):
