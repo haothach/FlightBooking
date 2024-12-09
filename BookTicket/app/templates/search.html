@@ -3,16 +3,18 @@
 {% block content %}
 
 
-<div class="container-custom mt-4" style="max-width: 1800px;>
-    <div class=" d-flex justify-content-between align-items-center">
-{% if departure and destination %}
-<h3 class="fw-bold btn btn-danger">{{ departure }} → {{ destination }}</h3>
-{% elif departure %}
-<h3 class="fw-bold btn btn-danger">Nơi khởi hành: {{ departure }}</h3>
-{% elif destination %}
-<h3 class="fw-bold btn btn-danger">Điểm đến: {{ destination }}</h3>
-{% endif %}
+<div class="container-custom mt-4" style="max-width: 1800px;">
+    <div class="d-flex justify-content-between align-items-center">
+        {% if departure and destination %}
+        <h3 class="fw-bold btn btn-danger">{{ departure }} → {{ destination }}</h3>
+        {% elif departure %}
+        <h3 class="fw-bold btn btn-danger">Nơi khởi hành: {{ departure }}</h3>
+        {% elif destination %}
+        <h3 class="fw-bold btn btn-danger">Điểm đến: {{ destination }}</h3>
+        {% endif %}
+    </div>
 </div>
+
 
 <!-- Search Info and Filter Button -->
 <div class="d-flex justify-content-between align-items-center mt-3">
@@ -96,13 +98,15 @@
             </div>
             <div class="text-center">
                 <p class="fw-bold fs-8 mb-1">Hãng bay</p>
+                <span class="mb-0 fs-6">{{ f.airline_name }}</span>
             </div>
             <div class="text-center">
                 <p class="fw-bold fs-8 mb-1">Giờ bay</p>
+                <span class="mb-0 fs-6">{{ f.arrival_time }}</span>
             </div>
             <div class="text-center">
                 <p class="fw-bold fs-8 mt-` mb-1">Thời gian</p>
-                <span class="mb-0 fw-bold fs-6">{{ f.flight_time }}</span>
+                <span class="mb-0 fs-6">{{ f.flight_time }}</span>
             </div>
             <div class="text-center">
                 <p class="fw-bold fs-8 mb-1">Lộ trình</p>
@@ -124,6 +128,5 @@
     </div>
 
 
-</div>
 </div>
 {% endblock %}

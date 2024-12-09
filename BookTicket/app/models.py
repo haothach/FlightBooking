@@ -47,7 +47,6 @@ class User(BaseModel, UserMixin):
     orders = relationship('Order', backref='user', lazy=True)
 
 
-
 class Province(BaseModel):
     name = Column(String(100), nullable=False)
 

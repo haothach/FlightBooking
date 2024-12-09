@@ -1,8 +1,9 @@
-from app.models import User, Province, Airport, Flight, FlightRoute
+from app.models import User, Province, Airport, Flight, FlightRoute,FlightSchedule,Ticket
 from app import app, db
 import hashlib
 import cloudinary.uploader
 import sqlite3, pymysql
+import datetime
 
 
 def load_province():
@@ -103,7 +104,6 @@ def load_flights(departure, destination, departure_date):
             AND des_province.name = %s  -- Tên sân bay đến
             AND DATE(fs.dep_time) = %s;  -- Ngày khởi hành
     """
-
     # Thực thi truy vấn
     cursor.execute(query, (departure, destination, departure_date))
     results = cursor.fetchall()
@@ -117,8 +117,8 @@ def load_flights(departure, destination, departure_date):
             "ticket_class": row[1],  # Hạng vé
             "departure_airport": row[2],  # Sân bay đi
             "destination_airport": row[3],  # Sân bay đến
-            "departure_time": row[4],  # Giờ khởi hành
-            "arrival_time": row[5],  # Giờ đến
+            "departure_time": row[4].strftime('%H:%M'),
+            "arrival_time": row[5].strftime('%H:%M'),
             "flight_time": row[6],  # Thời gian bay
             "airplane_name": row[7],  # Tên máy bay
             "airline_name": row[8],  # Tên hãng hàng không
