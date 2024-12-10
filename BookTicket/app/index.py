@@ -18,22 +18,35 @@ def index():
     return render_template('index.html', provinces=provinces)
 
 
+
 @app.route("/search")
 def search():
     departure = request.args.get('departure')
     destination = request.args.get('destination')
     departure_date = request.args.get('departure-date')
     passenger = request.args.get('passengers')
-
+    time_range = request.args.get('time_range')
+    arrival_time_range = request.args.get('arrival_time_range')
+    # Lấy danh sách chuyến bay
     flights = dao.load_flights(departure, destination, departure_date)
 
+    # Lọc theo giờ cất cánh (nếu có)
+    if time_range:
+        start, end = map(int, time_range.split('-'))
+        flights = [
+            flight for flight in flights
+            if start <= flight['departure_time'].hour < end
+        ]
+
+    # Lọc theo giờ hạ cánh (nếu có)
+    if arrival_time_range:
+        start, end = map(int, arrival_time_range.split('-'))
+        flights = [
+            flight for flight in flights
+            if start <= flight['arrival_time'].hour < end
+        ]
     return render_template('search.html', departure=departure, destination=destination,
                            departure_date=departure_date, passenger=passenger, flights=flights)
-
-
-@app.route("/selected")
-def selected():
-    pass
 
 
 @app.route("/register", methods=['get', 'post'])

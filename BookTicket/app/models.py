@@ -312,6 +312,8 @@ if __name__ == '__main__':
             {"flight_code": "VJ303", "flight_route_id": 6, "airplane_id": 6},
             {"flight_code": "VN404", "flight_route_id": 7, "airplane_id": 7},
             {"flight_code": "BB505", "flight_route_id": 8, "airplane_id": 8},
+            {"flight_code": "BB57O", "flight_route_id": 1, "airplane_id": 1},
+            {"flight_code": "A9125", "flight_route_id": 1, "airplane_id": 1}
         ]
 
         for flight in flights:
@@ -339,8 +341,12 @@ if __name__ == '__main__':
              "first_class_ticket_price": 2700000, "second_class_ticket_price": 1700000, "flight_id": 7},
             # Lịch bay Đà Lạt - Quảng Ninh
             {"dep_time": datetime.datetime(2024, 12, 12, 17, 0), "flight_time": 120,
-             "first_class_ticket_price": 3100000, "second_class_ticket_price": 2100000, "flight_id": 8}
+             "first_class_ticket_price": 3100000, "second_class_ticket_price": 2100000, "flight_id": 8},
             # Lịch bay Quảng Ninh - Tân Sơn Nhất
+            {"dep_time": datetime.datetime(2024, 12, 10, 17, 0), "flight_time": 120,
+             "first_class_ticket_price": 3100000, "second_class_ticket_price": 2100000, "flight_id": 9},
+            {"dep_time": datetime.datetime(2024, 12, 10, 19, 30), "flight_time": 100,
+             "first_class_ticket_price": 3100000, "second_class_ticket_price": 2100000, "flight_id": 10}
         ]
 
         for schedule in flight_schedules:
@@ -371,17 +377,21 @@ if __name__ == '__main__':
             {"flight_id": 2, "ticket_class": TicketClass.Business_Class},
             {"flight_id": 3, "ticket_class": TicketClass.Economy_Class},
             {"flight_id": 3, "ticket_class": TicketClass.Business_Class},
+            {"flight_id": 9, "ticket_class": TicketClass.Economy_Class},
+            {"flight_id": 9, "ticket_class": TicketClass.Business_Class},
+            {"flight_id": 10, "ticket_class": TicketClass.Economy_Class},
+            {"flight_id": 10, "ticket_class": TicketClass.Business_Class}
         ]
 
         # Thêm dữ liệu vào bảng Ticket
-        tickets = [
-            {"flight_id": 1, "ticket_class": TicketClass.Economy_Class},
-            {"flight_id": 1, "ticket_class": TicketClass.Business_Class},
-            {"flight_id": 2, "ticket_class": TicketClass.Economy_Class},
-            {"flight_id": 2, "ticket_class": TicketClass.Business_Class},
-            {"flight_id": 3, "ticket_class": TicketClass.Economy_Class},
-            {"flight_id": 3, "ticket_class": TicketClass.Business_Class},
-        ]
+        # tickets = [
+        #     {"flight_id": 1, "ticket_class": TicketClass.Economy_Class},
+        #     {"flight_id": 1, "ticket_class": TicketClass.Business_Class},
+        #     {"flight_id": 2, "ticket_class": TicketClass.Economy_Class},
+        #     {"flight_id": 2, "ticket_class": TicketClass.Business_Class},
+        #     {"flight_id": 3, "ticket_class": TicketClass.Economy_Class},
+        #     {"flight_id": 3, "ticket_class": TicketClass.Business_Class},
+        # ]
 
         for t in tickets:
             tic = Ticket(**t)
