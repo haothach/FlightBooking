@@ -80,7 +80,9 @@ def load_flights(departure, destination, departure_date):
             CASE 
                 WHEN t.ticket_class = 1 THEN fs.first_class_ticket_price  -- Giá vé hạng nhất
                 WHEN t.ticket_class = 2 THEN fs.second_class_ticket_price  -- Giá vé hạng phổ thông
-            END AS ticket_price  -- Giá vé
+            END AS ticket_price,  -- Giá vé
+            a.name AS intermediate_airport,  -- Sân bay trung gian
+            ia.stop_time AS stop_time        -- Thời gian dừng tại sân bay trung gian
         FROM 
             flight_schedule fs
         JOIN 
@@ -89,6 +91,10 @@ def load_flights(departure, destination, departure_date):
             ticket t ON f.id = t.flight_id
         JOIN 
             flight_route fr ON f.flight_route_id = fr.id
+        JOIN 
+            intermediate_airport ia ON f.id = ia.flight_id
+        JOIN 
+            airport a ON ia.airport_id = a.id
         JOIN 
             airport dep_airport ON fr.dep_airport_id = dep_airport.id
         JOIN 
@@ -103,6 +109,7 @@ def load_flights(departure, destination, departure_date):
             dep_province.name = %s  -- Tên sân bay đi
             AND des_province.name = %s  -- Tên sân bay đến
             AND DATE(fs.dep_time) = %s;  -- Ngày khởi hành
+
     """
     # Thực thi truy vấn
     cursor.execute(query, (departure, destination, departure_date))
@@ -117,12 +124,14 @@ def load_flights(departure, destination, departure_date):
             "ticket_class": row[1],  # Hạng vé
             "departure_airport": row[2],  # Sân bay đi
             "destination_airport": row[3],  # Sân bay đến
-            "departure_time": row[4].strftime('%H:%M'),
-            "arrival_time": row[5].strftime('%H:%M'),
+            "departure_time": row[4],
+            "arrival_time": row[5],
             "flight_time": row[6],  # Thời gian bay
             "airplane_name": row[7],  # Tên máy bay
             "airline_name": row[8],  # Tên hãng hàng không
             "ticket_price": row[9],  # Giá vé
+            "intermediate_airport":row[10],
+            "stop_time":row[11]
         }
         for row in results
     ]

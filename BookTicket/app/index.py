@@ -18,7 +18,6 @@ def index():
     return render_template('index.html', provinces=provinces)
 
 
-
 @app.route("/search")
 def search():
     departure = request.args.get('departure')
@@ -30,6 +29,11 @@ def search():
 
     return render_template('search.html', departure=departure, destination=destination,
                            departure_date=departure_date, passenger=passenger, flights=flights)
+
+
+@app.route("/selected")
+def selected():
+    pass
 
 
 @app.route("/register", methods=['get', 'post'])
