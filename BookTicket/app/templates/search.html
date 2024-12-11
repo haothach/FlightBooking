@@ -10,7 +10,6 @@
 </div>
 
 
-
 <!-- Search Info and Filter Button -->
 <div class="d-flex justify-content-between align-items-center mt-3">
     <span>{{ departure_date }} | {{ passenger }} Hành khách</span>
@@ -40,7 +39,7 @@
                 <label class="form-check-label" for="vietjetAir">Vietjet Air</label>
             </div>
 
-             <!-- Flight Time Filter -->
+            <!-- Flight Time Filter -->
             <h6 class="mt-3">Thời gian bay</h6>
             <h6 class="mt-2">Giờ cất cánh</h6>
             <form method="GET" action="/search">
@@ -117,43 +116,46 @@
 
     <div class="col-md-9">
         {% if flights %}
-        {% for f in flights %}
-        <div class="flight-item d-flex justify-content-between align-items-center border p-3 mb-3">
-            <!-- Thông tin chuyến bay -->
-            <div class="text-center">
-                <p class="fw-bold fs-8 mb-1">Hạng vé</p>
-                <span class="badge bg-primary">{{ f.ticket_class }}</span>
-                <p class=" fs-8 mb-1">{{ f.flight_code }}</p>
-            </div>
-            <div class="text-center">
-                <p class="fw-bold fs-8 mb-1">Hãng bay</p>
-                <span class="mb-0 fs-6">{{ f.airline_name }}</span>
-            </div>
-            <div class="text-center">
-                <p class="fw-bold fs-8 mb-1">Giờ bay</p>
-                <span class="mb-0 fs-6">{{ f.departure_time.strftime('%H:%M') }}</span>
-            </div>
-            <div class="text-center">
-                <p class="fw-bold fs-8 mt-` mb-1">Thời gian</p>
-                <span class="mb-0 fs-6">{{ f.flight_time }}</span>
-            </div>
-            <div class="text-center">
-                <p class="fw-bold fs-8 mb-1">Giờ đến</p>
-                <span class="mb-0 fs-6">{{ f.arrival_time.strftime('%H:%M') }}</span>
-            </div>
-            <div class="text-center">
-                <p class="fw-bold fs-8 mb-1">Lộ trình</p>
-                <p class="mb-0 fw-bold fs-6">{{ f.departure_airport }} → {{ f.destination_airport }}</p>
 
-            </div>
-            <div class="text-center">
-                <p class="fw-bold fs-8 mb-1">Giá vé</p>
-                <p class="mb-0 fw-bold fs-6 text-danger">{{"{:,.0f}".format( f.ticket_price )}} VND</p>
-            </div>
-            <div class="text-center">
-                <button class="btn btn-danger mt-2">Chọn</button>
+        {% for f in flights %}
+        <div class="container py-4">
+            <!-- Flight Card -->
+            <div class="row border p-3 mb-3">
+                <div class="col-md-3 text-center">
+                    <p class="mb-0">{{f.departure_time.strftime('%H:%M')}}</p>
+                    <p class="text-muted">{{f.departure_airport}}<br>{{departure}}</p>
+                </div>
+                <div class="col-md-6 text-center">
+                    <p class="text-muted">Thời gian bay: {{f.flight_time}}</p>
+                    {% if intermediate_airport %}
+                    <p class="mb-0">Bay thẳng</p>
+                    <p>{{f.flight_code}} Khai thác bởi {{f.airline_name}}</p>
+                    <a href="#">Chi tiết hành trình</a>
+                    {% endif %}
+                </div>
+                <div class="col-md-3 text-center">
+                    <p class="mb-0">07:05</p>
+                    <p class="text-muted">HAN<br>Nhà ga 1</p>
+                </div>
+                <div class="col-md-12 mt-3">
+                    <div class="d-flex">
+                        <div class="flex-grow-1 text-center border-end">
+                            <p class="fw-bold text-primary">PHỔ THÔNG</p>
+                            <p>Từ <span class="text-success">2.728.000 VND</span></p>
+                            <p class="text-muted">6 ghế còn lại</p>
+                            <button class="btn btn-primary">Chọn</button>
+                        </div>
+                        <div class="flex-grow-1 text-center">
+                            <p class="fw-bold text-warning">THƯƠNG GIA</p>
+                            <p>Từ <span class="text-success">3.741.000 VND</span></p>
+                            <p class="text-muted">5 ghế còn lại</p>
+                            <button class="btn btn-warning">Chọn</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+
         {% endfor %}
         {% else %}
         <p>Không tìm thấy chuyến bay nào phù hợp.</p>

@@ -18,7 +18,6 @@ def index():
     return render_template('index.html', provinces=provinces)
 
 
-
 @app.route("/search")
 def search():
     departure = request.args.get('departure')
