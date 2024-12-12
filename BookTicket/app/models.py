@@ -12,7 +12,6 @@ from flask_login import UserMixin
 
 
 class BaseModel(db.Model):
-
     __abstract__ = True
     id = Column(Integer, primary_key=True, autoincrement=True)
     # Các id ở dưới kế thừa từ basemodel
@@ -36,7 +35,6 @@ class TicketClass(TicketClassEnum):
 
 
 class User(BaseModel, UserMixin):
-
     name = Column(String(100), nullable=False)
     username = Column(String(100), nullable=False, unique=True)
     password = Column(String(100), nullable=False)
@@ -57,7 +55,6 @@ class Province(BaseModel):
 
 
 class Airport(BaseModel):
-
     name = Column(String(100), nullable=False)
     add = Column(String(100), nullable=False)
     province_id = Column(Integer, ForeignKey(Province.id), nullable=False)
@@ -76,7 +73,6 @@ class Airport(BaseModel):
 
 
 class FlightRoute(BaseModel):
-
     dep_airport_id = Column(Integer, ForeignKey(Airport.id), nullable=False)
     des_airport_id = Column(Integer, ForeignKey(Airport.id), nullable=False)
 
@@ -105,7 +101,6 @@ class FlightRoute(BaseModel):
 
 
 class Airplane(BaseModel):
-
     name = Column(String(100), nullable=False)
     airplane_type = Column(Enum(Airline), nullable=False)
     capacity = Column(Integer, nullable=False)
@@ -135,14 +130,13 @@ class Airplane(BaseModel):
 
 
 class Flight(BaseModel):
-
-    flight_code = Column(String(20), nullable=False,unique=True)
+    flight_code = Column(String(20), nullable=False, unique=True)
     flight_route_id = Column(Integer, ForeignKey(FlightRoute.id), nullable=False)
     airplane_id = Column(Integer, ForeignKey(Airplane.id), nullable=False)
 
     flight_schedules = relationship('FlightSchedule', backref='flight', lazy=True)
     tickets = relationship('Ticket', backref='flight', lazy=True)
-    inter_airports =  relationship('IntermediateAirport', backref='flight', lazy=True)
+    inter_airports = relationship('IntermediateAirport', backref='flight', lazy=True)
     price_lists = relationship('PriceList', backref='flight', lazy=True)
 
     def __str__(self):
@@ -157,7 +151,6 @@ class PriceList(BaseModel):
 
 
 class FlightSchedule(BaseModel):
-
     dep_time = Column(DateTime, nullable=False)
     flight_time = Column(Integer, nullable=False)
     business_class_seat_size = Column(Integer, nullable=False)
@@ -166,12 +159,32 @@ class FlightSchedule(BaseModel):
     flight_id = Column(Integer, ForeignKey(Flight.id), nullable=False, unique=True)
 
     def __init__(self, **kwargs):
+
         super().__init__(**kwargs)
-        # Kiểm tra điều kiện khi khởi tạo đối tượng
+
+        # Lấy thông tin chuyến bay từ flight_id
+        flight_id = kwargs.get('flight_id')
+        if flight_id is None:
+            raise ValueError("Flight ID must be provided.")
+
+        # Lấy thông tin flight
+        flight = Flight.query.get(flight_id)
+        if flight is None:
+            raise ValueError(f"No flight found with ID {flight_id}.")
+
+        # Lấy thông tin airplane thông qua flight
+        airplane = flight.airplane
+        if airplane is None:
+            raise ValueError("The flight must be associated with an airplane.")
+
+        # Kiểm tra số lượng ghế hạng business
         if self.business_class_seat_size < 10:
-            raise ValueError("Business class seat size must be >= 10")
-        if self.business_class_seat_size + self.economic_class_seat_size > self.airplane.capacity:
-            raise ValueError("Total seats must not exceed airplane capacity")
+            raise ValueError("Business class seat size must be >= 10.")
+
+        # Kiểm tra tổng số ghế không vượt quá capacity
+        total_seats = self.business_class_seat_size + self.economic_class_seat_size
+        if total_seats > airplane.capacity:
+            raise ValueError("Total seats must not exceed the airplane's capacity.")
 
 
 class IntermediateAirport(db.Model):
@@ -198,7 +211,6 @@ class Seat(BaseModel):
 
 
 class Ticket(BaseModel):
-
     date_created = Column(DateTime, default=datetime.datetime.utcnow)
     ticket_class = Column(Enum(TicketClass), nullable=False)
     price = Column(Integer, nullable=False)
@@ -210,7 +222,6 @@ class Ticket(BaseModel):
 
 
 class Bill(BaseModel):
-
     issueDate = Column(DateTime, nullable=False)
     total = Column(Float, nullable=False)
     is_Paid = Column(Boolean, default=False)
@@ -221,7 +232,6 @@ class Bill(BaseModel):
 
 
 class Order(BaseModel):
-
     order_day = Column(DateTime, nullable=False)
     order_method = Column(Integer, default=1)
     date_created = Column(DateTime, default=datetime.datetime.utcnow)
@@ -232,7 +242,6 @@ class Order(BaseModel):
 
 
 class OrderDetail(BaseModel):
-
     quantity = Column(Integer, default=1)
     unit_price = Column(Float, nullable=True)
     total = Column(Float, nullable=True)
