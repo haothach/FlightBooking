@@ -58,11 +58,6 @@ class Airport(BaseModel):
     name = Column(String(100), nullable=False)
     add = Column(String(100), nullable=False)
     province_id = Column(Integer, ForeignKey(Province.id), nullable=False)
-    # Số hàng ghế và số ghế mỗi hàng cho từng hạng
-    business_rows = Column(Integer, default=4)
-    business_seats_per_row = Column(Integer, default=4)
-    economy_rows = Column(Integer, default=20)
-    economy_seats_per_row = Column(Integer, default=6)
 
     dep_airports = relationship('FlightRoute', foreign_keys='FlightRoute.dep_airport_id', backref='dep_airport')
     des_airports = relationship('FlightRoute', foreign_keys='FlightRoute.des_airport_id', backref='des_airport')
@@ -104,6 +99,11 @@ class Airplane(BaseModel):
     name = Column(String(100), nullable=False)
     airplane_type = Column(Enum(Airline), nullable=False)
     capacity = Column(Integer, nullable=False)
+    # Số hàng ghế và số ghế mỗi hàng cho từng hạng
+    business_rows = Column(Integer, default=4)
+    business_seats_per_row = Column(Integer, default=4)
+    economy_rows = Column(Integer, default=20)
+    economy_seats_per_row = Column(Integer, default=6)
 
     flights = relationship('Flight', backref='airplane', lazy=True)
     seats = relationship('Seat', backref='airplane', lazy=True)

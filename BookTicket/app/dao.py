@@ -61,7 +61,6 @@ def load_flights(departure, destination, departure_date):
     query = """
         SELECT 
             f.flight_code AS flight_code,  -- Mã chuyến bay
-            t.ticket_class AS ticket_class,  -- Hạng vé
             dep_airport.name AS departure_airport,  -- Sân bay đi
             des_airport.name AS destination_airport,  -- Sân bay đến
             fs.dep_time AS departure_time,  -- Giờ khởi hành
@@ -75,18 +74,18 @@ def load_flights(departure, destination, departure_date):
                         MOD(fs.flight_time, 60), ' phút'      -- Tính số phút còn lại
                     )
             END AS flight_time,
+            
             ap.name AS airplane_name,  -- Tên máy bay
             ap.airplane_type AS airline_name,  -- Tên hãng hàng không
-            CASE 
-                WHEN t.ticket_class = 1 THEN fs.first_class_ticket_price  -- Giá vé hạng nhất
-                WHEN t.ticket_class = 2 THEN fs.second_class_ticket_price  -- Giá vé hạng phổ thông
-            END AS ticket_price,  -- Giá vé
+            
             a.name AS intermediate_airport,  -- Sân bay trung gian
             ia.stop_time AS stop_time        -- Thời gian dừng tại sân bay trung gian
         FROM 
             flight_schedule fs
         JOIN 
             flight f ON fs.flight_id = f.id
+        JOIN 
+            price_list pl ON f.id = pf.flight_id 
         JOIN 
             ticket t ON f.id = t.flight_id
         JOIN 
