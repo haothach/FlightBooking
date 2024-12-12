@@ -98,51 +98,14 @@ class FlightRoute(BaseModel):
 class Airplane(BaseModel):
     name = Column(String(100), nullable=False)
     airplane_type = Column(Enum(Airline), nullable=False)
-    capacity = Column(Integer, nullable=False)
-    # Số hàng ghế và số ghế mỗi hàng cho từng hạng
-    business_rows = Column(Integer, default=4)
-    business_seats_per_row = Column(Integer, default=4)
-    economy_rows = Column(Integer, default=20)
-    economy_seats_per_row = Column(Integer, default=6)
+    business_class_seat_size = Column(Integer, nullable=False)
+    economic_class_seat_size = Column(Integer, nullable=False)
 
     flights = relationship('Flight', backref='airplane', lazy=True)
     seats = relationship('Seat', backref='airplane', lazy=True)
 
     def __str__(self):
         return self.name
-
-    def generate_seats(self):
-        seats = []
-        # Tạo ghế Business
-        for row in range(1, self.business_rows + 1):
-            for col in range(self.business_seats_per_row):
-                seat_code = f"B{row}{chr(65 + col)}"  # Ví dụ: B1A, B1B
-                seats.append(Seat(seat_code=seat_code, airplane=self, seat_class=TicketClass.Business_Class))
-
-        # Tạo ghế Economy
-        for row in range(1, self.economy_rows + 1):
-            for col in range(self.economy_seats_per_row):
-                seat_code = f"E{row}{chr(65 + col)}"  # Ví dụ: E1A, E1B
-                seats.append(Seat(seat_code=seat_code, airplane=self, seat_class=TicketClass.Economy_Class))
-
-        # Thêm từng đối tượng Seat vào session
-        db.session.add_all(seats)
-        db.session.commit()
-
-        return seats
-
-
-class Seat(BaseModel):
-    seat_code = Column(String(10), nullable=False)
-    seat_class = Column(Enum(TicketClass), nullable=False)
-    is_available = Column(Boolean, default=1)
-
-    airplane_id = Column(Integer, ForeignKey(Airplane.id), nullable=False)
-
-    tickets = relationship('Ticket', backref='seat', lazy=True)
-
-    def __str__(self):
-        return f"{self.seat_code} ({self.seat_class.name})"
 
 
 class Flight(BaseModel):
@@ -153,17 +116,9 @@ class Flight(BaseModel):
     # flight_schedules = relationship('FlightSchedule', backref='flight', lazy=True)
     tickets = relationship('Ticket', backref='flight', lazy=True)
     inter_airports = relationship('IntermediateAirport', backref='flight', lazy=True)
-    price_lists = relationship('PriceList', backref='flight', lazy=True)
 
     def __str__(self):
         return self.flight_code
-
-
-class PriceList(BaseModel):
-    business_price = Column(Integer, nullable=False)
-    economic_price = Column(Integer, nullable=False)
-
-    flight_id = Column(Integer, ForeignKey(Flight.id), nullable=False)
 
 
 class FlightSchedule(BaseModel):
@@ -171,8 +126,12 @@ class FlightSchedule(BaseModel):
     flight_time = Column(Integer, nullable=False)
     business_class_seat_size = Column(Integer, nullable=False)
     economic_class_seat_size = Column(Integer, nullable=False)
+    business_class_price = Column(Integer, nullable=False)
+    economic_class_price = Column(Integer, nullable=False)
 
     flight_id = Column(Integer, ForeignKey(Flight.id), nullable=False, unique=True)
+
+    seats = relationship('Seat', backref='flight_schedule', lazy=True)
 
     def __init__(self, **kwargs):
 
@@ -194,23 +153,71 @@ class FlightSchedule(BaseModel):
             raise ValueError("The flight must be associated with an airplane.")
 
         # Kiểm tra số lượng ghế hạng business không vượt quá khả năng
-        max_business_seats = airplane.business_rows * airplane.business_seats_per_row
-        if self.business_class_seat_size > max_business_seats:
+
+        if self.business_class_seat_size > airplane.business_class_seat_sizeat:
             raise ValueError(
-                f"Business class seat size cannot exceed the airplane's business capacity ({max_business_seats})."
+                f"Business class seat size cannot exceed the airplane's business capacity ({ airplane.business_class_seat_size})."
             )
 
-        # Kiểm tra số lượng ghế hạng economy không vượt quá khả năng
-        max_economy_seats = airplane.economy_rows * airplane.economy_seats_per_row
-        if self.economic_class_seat_size > max_economy_seats:
+        if self.economic_class_seat_size > airplane.economic_class_seat_size:
             raise ValueError(
-                f"Economic class seat size cannot exceed the airplane's economic capacity ({max_economy_seats})."
+                f"Economic class seat size cannot exceed the airplane's business capacity ({ airplane.economic_class_seat_size})."
             )
 
-        # Kiểm tra tổng số ghế không vượt quá capacity
-        total_seats = self.business_class_seat_size + self.economic_class_seat_size
-        if total_seats > airplane.capacity:
-            raise ValueError("Total seats must not exceed the airplane's capacity.")
+    # Tạo ghế cho mỗi chuyến bay
+    def generate_seats(self):
+        """
+        Tạo ghế cho lịch trình chuyến bay.
+        """
+        flight = db.session.get(Flight, self.flight_id)
+        if not flight:
+            raise ValueError(f"No flight found with ID {self.flight_id}.")
+
+        airplane = flight.airplane
+        if not airplane:
+            raise ValueError("The flight must have an associated airplane.")
+
+        seats = []
+        columns = ['A', 'B', 'C', 'D', 'E', 'F']
+
+        # Hàm tạo ghế
+        def create_seats(seat_size, seat_prefix, seat_class):
+            rows = -(-seat_size // 6)  # Làm tròn lên
+            seat_number = 1
+            for row in range(1, rows + 1):
+                for col in columns:
+                    if seat_number > seat_size:
+                        return
+                    seat_code = f"{seat_prefix}{row}{col}"
+                    seats.append(Seat(
+                        seat_code=seat_code,
+                        seat_class=seat_class,
+                        is_available=True,
+                        airplane_id=airplane.id,
+                        flight_schedule_id=self.id
+                    ))
+                    seat_number += 1
+
+        # Tạo ghế cho từng hạng
+        create_seats(self.business_class_seat_size, "B", TicketClass.Business_Class)
+        create_seats(self.economic_class_seat_size, "E", TicketClass.Economy_Class)
+
+        # Lưu vào cơ sở dữ liệu
+        db.session.add_all(seats)
+        db.session.commit()
+
+
+class Seat(BaseModel):
+    seat_code = Column(String(10), nullable=False)
+    seat_class = Column(Enum(TicketClass), nullable=False)
+    is_available = Column(Boolean, default=1)
+
+    airplane_id = Column(Integer, ForeignKey(Airplane.id), nullable=False)
+    flight_schedule_id = Column(Integer, ForeignKey(FlightSchedule.id), nullable=False)
+    tickets = relationship('Ticket', backref='seat', lazy=True)
+
+    def __str__(self):
+        return f"{self.seat_code} ({self.seat_class.name})"
 
 
 class IntermediateAirport(db.Model):
