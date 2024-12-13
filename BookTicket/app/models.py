@@ -402,13 +402,7 @@ if __name__ == '__main__':
                 "airplane_type": Airline.Vietjet_Air,
                 "business_class_seat_size": 2 * 4,
                 "economic_class_seat_size": 5 * 6,
-            },
-            {
-                "name": "ATR 72",
-                "airplane_type": Airline.Bamboo_AirWays,
-                "business_class_seat_size": 1 * 4,
-                "economic_class_seat_size": 5 * 6,
-            },
+            }
         ]
 
         for ap in airplanes:
@@ -446,7 +440,7 @@ if __name__ == '__main__':
             {"flight_code": "BB202", "flight_route_id": 5, "airplane_id": 5},
             {"flight_code": "VJ303", "flight_route_id": 6, "airplane_id": 6},
             {"flight_code": "BB57O", "flight_route_id": 1, "airplane_id": 7},
-            {"flight_code": "A9125", "flight_route_id": 1, "airplane_id": 8}
+            {"flight_code": "A9125", "flight_route_id": 1, "airplane_id": 2}
         ]
 
         for flight in flights:
@@ -511,7 +505,7 @@ if __name__ == '__main__':
                 "economic_class_price": 1500000
             },
             {
-                "dep_time": datetime.datetime(2024, 12, 12, 10, 30),
+                "dep_time": datetime.datetime(2024, 12, 10, 10, 30),
                 "flight_time": 115,
                 "flight_id": 7,
                 "business_class_seat_size": 8,
@@ -523,7 +517,7 @@ if __name__ == '__main__':
                 "dep_time": datetime.datetime(2024, 12, 12, 17, 0),
                 "flight_time": 120,
                 "flight_id": 8,
-                "business_class_seat_size": 4,
+                "business_class_seat_size": 3,
                 "economic_class_seat_size": 5,
                 "business_class_price": 1000000,
                 "economic_class_price": 1500000
