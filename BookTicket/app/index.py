@@ -47,16 +47,16 @@ def search():
         ]
 
     # Kiểm tra ngày chọn có trước ngày hiện tại không
-    departure_date = datetime.strptime(departure_date, '%Y-%m-%d').date()
-    today = datetime.now().date()
-    if departure_date < today:
-        flash("Ngày đi không được trước ngày hôm nay!", "danger")
-        return redirect('/')
-
-    # Kiểm tra chọn điểm đi và điểm đến chưa
-    if not departure or not destination:
-        flash("Vui lòng chọn điểm đi và điểm đến!", "danger")
-        return redirect('/')
+    # departure_date = datetime.strptime(departure_date, '%Y-%m-%d').date()
+    # today = datetime.now().date()
+    # if departure_date < today:
+    #     flash("Ngày đi không được trước ngày hôm nay!", "danger")
+    #     return redirect('/')
+    #
+    # # Kiểm tra chọn điểm đi và điểm đến chưa
+    # if not departure or not destination:
+    #     flash("Vui lòng chọn điểm đi và điểm đến!", "danger")
+    #     return redirect('/')
 
     return render_template('search.html', departure=departure, destination=destination,
                            departure_date=departure_date, passenger=passenger, flights=flights)

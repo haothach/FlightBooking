@@ -144,13 +144,13 @@
                         <div class="flex-grow-1 text-center border-end">
                             <p class="fw-bold text-primary">PHỔ THÔNG</p>
                             <p>Từ <span class="text-success">{{f.business_price}} </span></p>
-                            <p class="text-muted">6 ghế còn lại</p>
+                            <p class="text-muted">{{ f.remaining_business_seats }}</p>
                             <button class="btn btn-primary">Chọn</button>
                         </div>
                         <div class="flex-grow-1 text-center">
                             <p class="fw-bold text-warning">THƯƠNG GIA</p>
-                            <p>Từ <span class="text-success">{{ f.economic_price }}</span></p>
-                            <p class="text-muted">5 ghế còn lại</p>
+                            <p>Từ <span class="text-success">{{ f.economic_price }}</span>VNĐ</p>
+                            <p class="text-muted">{{ f.remaining_economic_seats }}</p>
                             <button class="btn btn-warning">Chọn</button>
                         </div>
                     </div>
