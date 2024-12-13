@@ -127,8 +127,10 @@
                 </div>
                 <div class="col-md-6 text-center">
                     <p class="text-muted">Thời gian bay: {{f.flight_time}}</p>
-                    {% if intermediate_airport is not none%}
+                    {% if intermediate_airport is none%}
                     <p class="mb-0">Bay thẳng</p>
+                    {% else %}
+
                     <p>{{f.flight_code}} Khai thác bởi {{f.airline_name}}</p>
                     <a href="#">Chi tiết hành trình</a>
                     {% endif %}
@@ -140,14 +142,14 @@
                 <div class="col-md-12 mt-3">
                     <div class="d-flex">
                         <div class="flex-grow-1 text-center border-end">
-                            <p class="fw-bold text-primary">{{f.ticket_class}} </p>
-                            <p>Từ <span class="text-success">{{f.ticket_price}} </span></p>
+                            <p class="fw-bold text-primary">PHỔ THÔNG</p>
+                            <p>Từ <span class="text-success">{{f.business_price}} </span></p>
                             <p class="text-muted">6 ghế còn lại</p>
                             <button class="btn btn-primary">Chọn</button>
                         </div>
                         <div class="flex-grow-1 text-center">
                             <p class="fw-bold text-warning">THƯƠNG GIA</p>
-                            <p>Từ <span class="text-success">3.741.000 VND</span></p>
+                            <p>Từ <span class="text-success">{{ f.economic_price }}</span></p>
                             <p class="text-muted">5 ghế còn lại</p>
                             <button class="btn btn-warning">Chọn</button>
                         </div>

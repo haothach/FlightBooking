@@ -213,17 +213,11 @@ class Seat(BaseModel):
     is_available = Column(Boolean, default=1)
 
     airplane_id = Column(Integer, ForeignKey(Airplane.id), nullable=False)
-
+    flight_schedule_id = Column(Integer, ForeignKey(FlightSchedule.id), nullable=False)
     tickets = relationship('Ticket', backref='seat', lazy=True)
 
     def __str__(self):
         return f"{self.seat_code} ({self.seat_class.name})"
-
-
-class SeatAssignment(db.Model):
-    seat_id = Column(Integer, ForeignKey(Seat.id), primary_key=True)
-    flight_schedule_id = Column(Integer, ForeignKey(FlightSchedule.id), primary_key=True)
-
 
 
 class IntermediateAirport(db.Model):

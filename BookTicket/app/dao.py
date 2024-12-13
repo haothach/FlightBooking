@@ -74,10 +74,10 @@ def load_flights(departure, destination, departure_date):
                         MOD(fs.flight_time, 60), ' phút'      -- Tính số phút còn lại
                     )
             END AS flight_time,
-            
             ap.name AS airplane_name,  -- Tên máy bay
             ap.airplane_type AS airline_name,  -- Tên hãng hàng không
-            
+            pl.business_price AS business_price, 
+            pl.economic_price AS economic_price, 
             a.name AS intermediate_airport,  -- Sân bay trung gian
             ia.stop_time AS stop_time        -- Thời gian dừng tại sân bay trung gian
         FROM 
@@ -85,7 +85,7 @@ def load_flights(departure, destination, departure_date):
         JOIN 
             flight f ON fs.flight_id = f.id
         JOIN 
-            price_list pl ON f.id = pf.flight_id 
+            price_list pl ON f.id = pl.flight_id
         JOIN 
             ticket t ON f.id = t.flight_id
         JOIN 
@@ -120,7 +120,7 @@ def load_flights(departure, destination, departure_date):
     flights = [
         {
             "flight_code": row[0],  # Mã chuyến bay
-            "ticket_class": row[1],  # Hạng vé
+            "business_price": row[1],  #gia ve hang 1
             "departure_airport": row[2],  # Sân bay đi
             "destination_airport": row[3],  # Sân bay đến
             "departure_time": row[4],
@@ -128,7 +128,7 @@ def load_flights(departure, destination, departure_date):
             "flight_time": row[6],  # Thời gian bay
             "airplane_name": row[7],  # Tên máy bay
             "airline_name": row[8],  # Tên hãng hàng không
-            "ticket_price": row[9],  # Giá vé
+            "economic_price": row[9],  # Giá vé hang 2
             "intermediate_airport":row[10],
             "stop_time":row[11]
         }

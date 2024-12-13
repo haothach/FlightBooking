@@ -66,3 +66,19 @@
 
     // Đặt giá trị mặc định cho input là ngày hiện tại
     departureDateInput.value = `${yyyy}-${mm}-${dd}`;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const alerts = document.querySelectorAll('.alert');
+
+        // Hiệu ứng xuất hiện
+        alerts.forEach(alert => {
+            alert.classList.add('fade-in'); // Thêm hiệu ứng xuất hiện
+
+            // Tự động ẩn sau 3 giây
+            setTimeout(() => {
+                alert.classList.remove('fade-in'); // Loại bỏ hiệu ứng xuất hiện
+                alert.classList.add('fade-out');  // Thêm hiệu ứng biến mất
+                setTimeout(() => alert.remove(), 500); // Xóa khỏi DOM sau khi hiệu ứng kết thúc
+            }, 3000); // 3000ms = 3 giây
+        });
+    });

@@ -1,11 +1,12 @@
 import hashlib
 import string
 
-from flask import render_template, request, redirect
+from flask import render_template, request, redirect,flash
 import dao
 from app import app, login
 from flask_login import login_user, logout_user
 from app.models import UserRole
+from datetime import datetime
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -44,19 +45,31 @@ def search():
             flight for flight in flights
             if start <= flight['arrival_time'].hour < end
         ]
+
+    # Kiểm tra ngày chọn có trước ngày hiện tại không
+    departure_date = datetime.strptime(departure_date, '%Y-%m-%d').date()
+    today = datetime.now().date()
+    if departure_date < today:
+        flash("Ngày đi không được trước ngày hôm nay!", "danger")
+        return redirect('/')
+
+    # Kiểm tra chọn điểm đi và điểm đến chưa
+    if not departure or not destination:
+        flash("Vui lòng chọn điểm đi và điểm đến!", "danger")
+        return redirect('/')
+
     return render_template('search.html', departure=departure, destination=destination,
                            departure_date=departure_date, passenger=passenger, flights=flights)
 
 
 @app.route("/register", methods=['get', 'post'])
 def register_view():
-    err_msg = ''
     if request.method.__eq__('POST'):
         password = request.form.get('password')
         confirm = request.form.get('confirm')
 
         if not password.__eq__(confirm):
-            err_msg = 'Mật khẩu không khớp!'
+            flash("Mật khẩu không khớp", "danger")
         else:
             data = request.form.copy()
             del data['confirm']
@@ -65,7 +78,7 @@ def register_view():
 
             return redirect('/login')
 
-    return render_template('register.html', err_msg=err_msg)
+    return render_template('register.html')
 
 
 @app.route("/login", methods=['post', 'get'])
@@ -76,6 +89,9 @@ def login_view():
         user = dao.auth_user(username=username, password=password)
         if user:
             login_user(user=user)
+            if user.user_role == UserRole.ADMIN:
+                return redirect('/admin')
+
             return redirect('/')
     return render_template("login.html")
 
