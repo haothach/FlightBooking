@@ -1,6 +1,6 @@
 from email.policy import default
 
-from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Enum, Date, DateTime
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Enum, Date, DateTime, event
 from sqlalchemy.orm import relationship, validates, backref
 from app import db, app
 import hashlib
@@ -107,6 +107,30 @@ class Airplane(BaseModel):
     def __str__(self):
         return self.name
 
+    def generate_seats(self):
+        """Tạo danh sách ghế dựa trên số lượng ghế business và economy."""
+        seats = []
+
+        # Tạo ghế Business
+        for idx in range(1, self.business_class_seat_size + 1):  # Bắt đầu từ 1 đến business_class_seat_size
+            seats.append(Seat(
+                seat_code=f"B{idx}",  # Mã ghế dạng B1, B2, ...
+                seat_class=TicketClass.Business_Class,
+                airplane_id=self.id
+            ))
+
+        # Tạo ghế Economy
+        for idx in range(1, self.economic_class_seat_size + 1):  # Bắt đầu từ 1 đến economic_class_seat_size
+            seats.append(Seat(
+                seat_code=f"E{idx}",  # Mã ghế dạng E1, E2, ...
+                seat_class=TicketClass.Economy_Class,
+                airplane_id=self.id
+            ))
+
+        # Thêm danh sách ghế vào database
+        db.session.add_all(seats)
+        db.session.commit()
+
 
 class Flight(BaseModel):
     flight_code = Column(String(20), nullable=False, unique=True)
@@ -116,6 +140,7 @@ class Flight(BaseModel):
     # flight_schedules = relationship('FlightSchedule', backref='flight', lazy=True)
     tickets = relationship('Ticket', backref='flight', lazy=True)
     inter_airports = relationship('IntermediateAirport', backref='flight', lazy=True)
+    flight_schedules = relationship('FlightSchedule', backref='flight', lazy=True)
 
     def __str__(self):
         return self.flight_code
@@ -126,104 +151,93 @@ class FlightSchedule(BaseModel):
     flight_time = Column(Integer, nullable=False)
     business_class_seat_size = Column(Integer, nullable=False)
     economic_class_seat_size = Column(Integer, nullable=False)
-    business_class_price = Column(Integer, nullable=False)
-    economic_class_price = Column(Integer, nullable=False)
 
     flight_id = Column(Integer, ForeignKey(Flight.id), nullable=False, unique=True)
 
-    seats = relationship('Seat', backref='flight_schedule', lazy=True)
+    seat_assignments = relationship('SeatAssignment', backref='flight_schedule', lazy=True)
 
     def __init__(self, **kwargs):
-
         super().__init__(**kwargs)
 
-        # Lấy thông tin chuyến bay từ flight_id
         flight_id = kwargs.get('flight_id')
         if flight_id is None:
             raise ValueError("Flight ID must be provided.")
 
-        # Lấy thông tin flight
+        # Lấy thông tin chuyến bay từ flight_id
         flight = db.session.get(Flight, flight_id)
         if flight is None:
-            raise ValueError(f"No flight found with ID {flight_id}.")
+            raise ValueError(f"No flight found with ID {flight_id}.")  # Xử lý nếu không tìm thấy chuyến bay
 
-        # Lấy thông tin airplane thông qua flight
+        # Kiểm tra nếu chuyến bay không có máy bay (airplane)
         airplane = flight.airplane
         if airplane is None:
-            raise ValueError("The flight must be associated with an airplane.")
+            raise ValueError("The flight must be associated with an airplane.")  # Xử lý nếu chuyến bay không có máy bay
 
-        # Kiểm tra số lượng ghế hạng business không vượt quá khả năng
-
-        if self.business_class_seat_size > airplane.business_class_seat_sizeat:
+        # Kiểm tra số lượng ghế hạng business và economic không vượt quá khả năng của máy bay
+        if self.business_class_seat_size > airplane.business_class_seat_size:
             raise ValueError(
-                f"Business class seat size cannot exceed the airplane's business capacity ({ airplane.business_class_seat_size})."
+                f"Business class seat size cannot exceed the airplane's business capacity ({airplane.business_class_seat_size})."
             )
 
         if self.economic_class_seat_size > airplane.economic_class_seat_size:
             raise ValueError(
-                f"Economic class seat size cannot exceed the airplane's business capacity ({ airplane.economic_class_seat_size})."
+                f"Economic class seat size cannot exceed the airplane's economic capacity ({airplane.economic_class_seat_size})."
             )
 
-    # Tạo ghế cho mỗi chuyến bay
-    def generate_seats(self):
+    def create_seat_assignments(self):
         """
-        Tạo ghế cho lịch trình chuyến bay.
+        Tạo danh sách SeatAssignment cho lịch bay dựa trên số ghế được định sẵn.
         """
-        flight = db.session.get(Flight, self.flight_id)
+        # Lấy đối tượng Flight từ flight_id
+        flight = db.session.query(Flight).filter_by(id=self.flight_id).first()
+
+        # Kiểm tra nếu không tìm thấy Flight, thoát ra
         if not flight:
-            raise ValueError(f"No flight found with ID {self.flight_id}.")
+            print(f"Flight with id {self.flight_id} not found.")
+            return
 
-        airplane = flight.airplane
-        if not airplane:
-            raise ValueError("The flight must have an associated airplane.")
+        # Lấy danh sách ghế business và economy với số lượng giới hạn theo yêu cầu
+        business_seats = db.session.query(Seat).filter(
+            Seat.airplane_id == flight.airplane_id,
+            Seat.seat_class == TicketClass.Business_Class
+        ).limit(self.business_class_seat_size).all()
 
-        seats = []
-        columns = ['A', 'B', 'C', 'D', 'E', 'F']
+        economic_seats = db.session.query(Seat).filter(
+            Seat.airplane_id == flight.airplane_id,
+            Seat.seat_class == TicketClass.Economy_Class
+        ).limit(self.economic_class_seat_size).all()
 
-        # Hàm tạo ghế
-        def create_seats(seat_size, seat_prefix, seat_class):
-            rows = -(-seat_size // 6)  # Làm tròn lên
-            seat_number = 1
-            for row in range(1, rows + 1):
-                for col in columns:
-                    if seat_number > seat_size:
-                        return
-                    seat_code = f"{seat_prefix}{row}{col}"
-                    seats.append(Seat(
-                        seat_code=seat_code,
-                        seat_class=seat_class,
-                        is_available=True,
-                        airplane_id=airplane.id,
-                        flight_schedule_id=self.id
-                    ))
-                    seat_number += 1
+        # Tạo SeatAssignment cho các ghế business
+        for seat in business_seats:
+            seat_assignment = SeatAssignment(seat_id=seat.id, flight_schedule_id=self.id, is_available=True)
+            db.session.add(seat_assignment)
 
-        # Tạo ghế cho từng hạng
-        create_seats(self.business_class_seat_size, "B", TicketClass.Business_Class)
-        create_seats(self.economic_class_seat_size, "E", TicketClass.Economy_Class)
+        # Tạo SeatAssignment cho các ghế economic
+        for seat in economic_seats:
+            seat_assignment = SeatAssignment(seat_id=seat.id, flight_schedule_id=self.id, is_available=True)
+            db.session.add(seat_assignment)
 
-        # Lưu vào cơ sở dữ liệu
-        db.session.add_all(seats)
+        # Commit vào cơ sở dữ liệu
         db.session.commit()
 
 
 class Seat(BaseModel):
     seat_code = Column(String(10), nullable=False)
     seat_class = Column(Enum(TicketClass), nullable=False)
-    is_available = Column(Boolean, default=1)
 
     airplane_id = Column(Integer, ForeignKey(Airplane.id), nullable=False)
 
     tickets = relationship('Ticket', backref='seat', lazy=True)
+    seat_assignments = relationship('SeatAssignment', backref='seat', lazy=True)
 
     def __str__(self):
         return f"{self.seat_code} ({self.seat_class.name})"
 
 
-class SeatAssignment(db.Model):
+class SeatAssignment(BaseModel):
     seat_id = Column(Integer, ForeignKey(Seat.id), primary_key=True)
     flight_schedule_id = Column(Integer, ForeignKey(FlightSchedule.id), primary_key=True)
-
+    is_available = Column(Boolean, default=1)
 
 
 class IntermediateAirport(db.Model):
@@ -339,42 +353,67 @@ if __name__ == '__main__':
             a = Airport(**a)
             db.session.add(a)
 
-        # Add airplanes
+        # Chuyển đổi dữ liệu từ danh sách airplanes thành các đối tượng Airplane
         airplanes = [
-            {"name": "Airbus A320", "airplane_type": Airline.VietNam_Airline, "capacity": 180,
-             "business_rows": 5, "business_seats_per_row": 4, "economy_rows": 20, "economy_seats_per_row": 6},
-            {"name": "Boeing 787", "airplane_type": Airline.Bamboo_AirWays, "capacity": 250,
-             "business_rows": 10, "business_seats_per_row": 5, "economy_rows": 30, "economy_seats_per_row": 7},
-            {"name": "Airbus A321", "airplane_type": Airline.Vietjet_Air, "capacity": 230,
-             "business_rows": 6, "business_seats_per_row": 4, "economy_rows": 24, "economy_seats_per_row": 6},
-            {"name": "Boeing 737", "airplane_type": Airline.VietNam_Airline, "capacity": 150,
-             "business_rows": 4, "business_seats_per_row": 4, "economy_rows": 18, "economy_seats_per_row": 6},
-            {"name": "Airbus A380", "airplane_type": Airline.Bamboo_AirWays, "capacity": 850,
-             "business_rows": 25, "business_seats_per_row": 6, "economy_rows": 80, "economy_seats_per_row": 10},
-            {"name": "Boeing 777", "airplane_type": Airline.VietNam_Airline, "capacity": 300,
-             "business_rows": 10, "business_seats_per_row": 5, "economy_rows": 40, "economy_seats_per_row": 7},
-            {"name": "Embraer E195", "airplane_type": Airline.Vietjet_Air, "capacity": 120,
-             "business_rows": 2, "business_seats_per_row": 4, "economy_rows": 15, "economy_seats_per_row": 6},
-            {"name": "ATR 72", "airplane_type": Airline.Bamboo_AirWays, "capacity": 70,
-             "business_rows": 1, "business_seats_per_row": 4, "economy_rows": 10, "economy_seats_per_row": 6}
+            {
+                "name": "Airbus A320",
+                "airplane_type": Airline.VietNam_Airline,
+                "business_class_seat_size": 5 * 4,  # 5 hàng * 4 ghế/hàng
+                "economic_class_seat_size": 10 * 6,  # 20 hàng * 6 ghế/hàng
+            },
+            {
+                "name": "Boeing 787",
+                "airplane_type": Airline.Bamboo_AirWays,
+                "business_class_seat_size": 5 * 5,
+                "economic_class_seat_size": 10 * 7,
+            },
+            {
+                "name": "Airbus A321",
+                "airplane_type": Airline.Vietjet_Air,
+                "business_class_seat_size": 6 * 4,
+                "economic_class_seat_size": 14 * 6,
+            },
+            {
+                "name": "Boeing 737",
+                "airplane_type": Airline.VietNam_Airline,
+                "business_class_seat_size": 4 * 4,
+                "economic_class_seat_size": 10 * 6,
+            },
+            {
+                "name": "Airbus A380",
+                "airplane_type": Airline.Bamboo_AirWays,
+                "business_class_seat_size": 5 * 6,
+                "economic_class_seat_size": 8 * 5,
+            },
+            {
+                "name": "Boeing 777",
+                "airplane_type": Airline.VietNam_Airline,
+                "business_class_seat_size": 5 * 5,
+                "economic_class_seat_size": 4 * 7,
+            },
+            {
+                "name": "Embraer E195",
+                "airplane_type": Airline.Vietjet_Air,
+                "business_class_seat_size": 2 * 4,
+                "economic_class_seat_size": 5 * 6,
+            },
+            {
+                "name": "ATR 72",
+                "airplane_type": Airline.Bamboo_AirWays,
+                "business_class_seat_size": 1 * 4,
+                "economic_class_seat_size": 5 * 6,
+            },
         ]
 
-        for a in airplanes:
+        for ap in airplanes:
             # Tạo đối tượng Airplane
-            airplane = Airplane(
-                name=a["name"],
-                airplane_type=a["airplane_type"],
-                capacity=a["capacity"],
-                business_rows=a["business_rows"],
-                business_seats_per_row=a["business_seats_per_row"],
-                economy_rows=a["economy_rows"],
-                economy_seats_per_row=a["economy_seats_per_row"]
-            )
-            # Thêm Airplane vào session
-            db.session.add(airplane)
-            db.session.commit()  # Cần commit để có ID hợp lệ cho airplane
+            airplane = Airplane(**ap)
 
-            # Gọi generate_seats sau khi airplane đã được thêm vào database
+            # Thêm vào session và commit để lấy `id`
+            db.session.add(airplane)
+            db.session.commit()
+
+            # Gọi hàm generate_seats sau khi `id` đã được gán
             airplane.generate_seats()
 
         flight_routes = [
@@ -415,63 +454,66 @@ if __name__ == '__main__':
                 "dep_time": datetime.datetime(2024, 12, 10, 8, 30),
                 "flight_time": 120,
                 "flight_id": 1,
-                "business_class_seat_size": 12,
-                "economic_class_seat_size": 120
+                "business_class_seat_size": 10,
+                "economic_class_seat_size": 12
             },
             {
                 "dep_time": datetime.datetime(2024, 12, 10, 10, 0),
                 "flight_time": 90,
                 "flight_id": 2,
                 "business_class_seat_size": 10,
-                "economic_class_seat_size": 100
+                "economic_class_seat_size": 10
             },
             {
                 "dep_time": datetime.datetime(2024, 12, 10, 12, 0),
                 "flight_time": 80,
                 "flight_id": 3,
                 "business_class_seat_size": 8,
-                "economic_class_seat_size": 80
+                "economic_class_seat_size": 8
             },
             {
                 "dep_time": datetime.datetime(2024, 12, 10, 15, 0),
                 "flight_time": 100,
                 "flight_id": 4,
                 "business_class_seat_size": 15,
-                "economic_class_seat_size": 100
+                "economic_class_seat_size": 10
             },
             {
                 "dep_time": datetime.datetime(2024, 12, 11, 8, 0),
                 "flight_time": 130,
                 "flight_id": 5,
                 "business_class_seat_size": 20,
-                "economic_class_seat_size": 100
+                "economic_class_seat_size": 10
             },
             {
                 "dep_time": datetime.datetime(2024, 12, 11, 14, 0),
                 "flight_time": 95,
                 "flight_id": 6,
                 "business_class_seat_size": 14,
-                "economic_class_seat_size": 140
+                "economic_class_seat_size": 14
             },
             {
                 "dep_time": datetime.datetime(2024, 12, 12, 10, 30),
                 "flight_time": 115,
                 "flight_id": 7,
                 "business_class_seat_size": 8,
-                "economic_class_seat_size": 90
+                "economic_class_seat_size": 9
             },
             {
                 "dep_time": datetime.datetime(2024, 12, 12, 17, 0),
                 "flight_time": 120,
                 "flight_id": 8,
                 "business_class_seat_size": 4,
-                "economic_class_seat_size": 50
+                "economic_class_seat_size": 5
             }
         ]
 
         for schedule in flight_schedules:
             flight_schedule = FlightSchedule(**schedule)
             db.session.add(flight_schedule)
+            db.session.commit()
+            flight_schedule.create_seat_assignments()
+
 
         # Thêm dữ liệu vào bảng IntermediateAirport
         intermediate_airports = [
@@ -491,7 +533,7 @@ if __name__ == '__main__':
 
         # Thêm dữ liệu vào bảng Price List
         price_lists = [
-            {'business_price':2000000, 'economic_price': 1500000, 'flight_id': 1},
+            {'business_price': 2000000, 'economic_price': 1500000, 'flight_id': 1},
             {'business_price': 4000000, 'economic_price': 1900000, 'flight_id': 8},
             {'business_price': 2200000, 'economic_price': 900000, 'flight_id': 2},
             {'business_price': 2900000, 'economic_price': 1500000, 'flight_id': 6},
