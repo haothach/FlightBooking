@@ -107,13 +107,14 @@
                 </div>
                 <div class="col-md-6 text-center">
                     <p class="text-muted">Thời gian bay: {{f.flight_time}}</p>
-                    {% if intermediate_airport is none%}
+                    {% if not intermediate_airport %}
                     <p class="mb-0">Bay thẳng</p>
                     {% else %}
-
-                    <p>{{f.flight_code}} Khai thác bởi {{f.airline_name}}</p>
-                    <a href="#">Chi tiết hành trình</a>
+                    <p class="mb-0">Sân bay trung gian: {{ f.intermediate_airport }}</p>
+                    <p class="text-muted">Thời gian dừng: {{ f.stop_time }}</p>
                     {% endif %}
+                    <p>{{f.flight_code}} Khai thác bởi {{f.intermediate_airport}}</p>
+                    <a href="#">Chi tiết hành trình</a>
                 </div>
                 <div class="col-md-3 text-center">
                     <p class="mb-0">{{f.arrival_time.strftime('%H:%M')}}</p>
@@ -123,14 +124,14 @@
                     <div class="d-flex">
                         <div class="flex-grow-1 text-center border-end">
                             <p class="fw-bold text-primary">PHỔ THÔNG</p>
-                            <p>Từ <span class="text-success">{{ f.economic_price }}</span> VNĐ</p>
-                            <p class="text-muted">{{ f.remaining_business_seats }}</p>
+                            <p>Từ <span class="text-success">{{ "{:,.0f}".format(f.economic_price).replace(',', '.') }}</span> VNĐ</p>
+                            <p class="text-muted">Còn lại: {{ f.remaining_economic_seats }} ghế</p>
                             <button class="btn btn-primary">Chọn</button>
                         </div>
                         <div class="flex-grow-1 text-center">
                             <p class="fw-bold text-warning">THƯƠNG GIA</p>
-                            <p>Từ <span class="text-success">{{f.business_price}}</span> VNĐ</p>
-                            <p class="text-muted">{{ f.remaining_economic_seats }}</p>
+                            <p>Từ <span class="text-success">{{ "{:,.0f}".format(f.business_price).replace(',', '.') }}</span> VNĐ</p>
+                            <p class="text-muted">Còn lại: {{ f.remaining_business_seats }} ghế</p>
                             <button class="btn btn-warning">Chọn</button>
                         </div>
                     </div>

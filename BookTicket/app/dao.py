@@ -76,10 +76,18 @@ def load_flights(departure, destination, departure_date):
                         LPAD(MOD(fs.flight_time, 60), 2, '0'), ' phút'
                     )
             END AS flight_time,
-            a.name AS airplane_name,  -- Tên máy bay
-            ap.name AS airline_name,  -- Tên hãng hàng không
-            ia.airport_id AS intermediate_airport,  -- Tên sân bay trung gian
-            ia.stop_time,  -- Thời gian dừng
+            ap.name AS airplane_name,  -- Tên máy bay
+            ap.airplane_type AS airline_name,  -- Tên hãng hàng không
+            a.name AS intermediate_airport,  -- Tên sân bay trung gian
+            CASE 
+                WHEN ia.stop_time < 60 THEN 
+                    CONCAT(ia.stop_time, ' phút')
+                ELSE 
+                    CONCAT(
+                        FLOOR(ia.stop_time / 60), ' giờ ',
+                        LPAD(MOD(ia.stop_time, 60), 2, '0'), ' phút'
+                    )
+            END AS stop_time,
             (SELECT COUNT(*) 
              FROM seat_assignment sa
              JOIN seat s ON sa.seat_id = s.id

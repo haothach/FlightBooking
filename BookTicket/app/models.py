@@ -432,7 +432,7 @@ if __name__ == '__main__':
                 "flight_id": 1,
                 "business_class_seat_size": 15,
                 "economic_class_seat_size": 55,
-                "business_class_price": 1000000,
+                "business_class_price": 1800000,  # Giá business cao hơn economic
                 "economic_class_price": 1500000
             },
             {
@@ -441,7 +441,7 @@ if __name__ == '__main__':
                 "flight_id": 2,
                 "business_class_seat_size": 25,
                 "economic_class_seat_size": 60,
-                "business_class_price": 2000000,
+                "business_class_price": 3300000,  # Giá business cao hơn economic
                 "economic_class_price": 3000000
             },
             {
@@ -450,7 +450,7 @@ if __name__ == '__main__':
                 "flight_id": 3,
                 "business_class_seat_size": 20,
                 "economic_class_seat_size": 70,
-                "business_class_price": 1000000,
+                "business_class_price": 1800000,  # Giá business cao hơn economic
                 "economic_class_price": 1500000
             },
             {
@@ -459,7 +459,7 @@ if __name__ == '__main__':
                 "flight_id": 4,
                 "business_class_seat_size": 15,
                 "economic_class_seat_size": 50,
-                "business_class_price": 1500000,
+                "business_class_price": 2200000,  # Giá business cao hơn economic
                 "economic_class_price": 2000000
             },
             {
@@ -468,7 +468,7 @@ if __name__ == '__main__':
                 "flight_id": 5,
                 "business_class_seat_size": 30,
                 "economic_class_seat_size": 60,
-                "business_class_price": 4000000,
+                "business_class_price": 6000000,  # Giá business cao hơn economic
                 "economic_class_price": 5500000
             },
             {
@@ -477,7 +477,7 @@ if __name__ == '__main__':
                 "flight_id": 6,
                 "business_class_seat_size": 20,
                 "economic_class_seat_size": 45,
-                "business_class_price": 1000000,
+                "business_class_price": 1800000,  # Giá business cao hơn economic
                 "economic_class_price": 1500000
             },
             {
@@ -486,7 +486,7 @@ if __name__ == '__main__':
                 "flight_id": 7,
                 "business_class_seat_size": 15,
                 "economic_class_seat_size": 45,
-                "business_class_price": 1000000,
+                "business_class_price": 1800000,  # Giá business cao hơn economic
                 "economic_class_price": 1500000
             },
             {
@@ -495,7 +495,7 @@ if __name__ == '__main__':
                 "flight_id": 8,
                 "business_class_seat_size": 10,
                 "economic_class_seat_size": 55,
-                "business_class_price": 1000000,
+                "business_class_price": 1800000,  # Giá business cao hơn economic
                 "economic_class_price": 1500000
             }
         ]
@@ -505,7 +505,6 @@ if __name__ == '__main__':
             db.session.add(flight_schedule)
             db.session.commit()
             flight_schedule.create_seat_assignments()
-
 
         # Thêm dữ liệu vào bảng IntermediateAirport
         intermediate_airports = [
