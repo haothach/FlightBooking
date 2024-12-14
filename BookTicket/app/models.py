@@ -9,6 +9,7 @@ from enum import Enum as AirlineEnum
 from enum import Enum as TicketClassEnum
 import datetime
 from flask_login import UserMixin
+import math
 
 
 class BaseModel(db.Model):
@@ -114,9 +115,11 @@ class Airplane(BaseModel):
         seat_letters = ['A', 'B', 'C', 'D', 'E', 'F']  # Các cột từ A đến F
 
         # Tạo ghế Business
-        for row in range(1, self.business_class_seat_size // 6 + 1):  # Chia số lượng ghế cho 6 để xác định số hàng
+        for row in range(1, math.ceil(self.business_class_seat_size / 6) + 1):
             for col_idx, letter in enumerate(seat_letters):
-                seat_code = f"B{row}{letter}"  # Mã ghế theo mẫu B1A, B1B, ...
+                if len(seats) >= self.business_class_seat_size:  # Dừng nếu đủ số ghế
+                    break
+                seat_code = f"B{row}{letter}"
                 seats.append(Seat(
                     seat_code=seat_code,
                     seat_class=TicketClass.Business_Class,
@@ -124,9 +127,11 @@ class Airplane(BaseModel):
                 ))
 
         # Tạo ghế Economy
-        for row in range(1, self.economic_class_seat_size // 6 + 1):  # Chia số lượng ghế cho 6 để xác định số hàng
+        for row in range(1, math.ceil(self.economic_class_seat_size / 6) + 1):
             for col_idx, letter in enumerate(seat_letters):
-                seat_code = f"E{row}{letter}"  # Mã ghế theo mẫu E1A, E1B, ...
+                if len(seats) - self.business_class_seat_size >= self.economic_class_seat_size:
+                    break
+                seat_code = f"E{row}{letter}"
                 seats.append(Seat(
                     seat_code=seat_code,
                     seat_class=TicketClass.Economy_Class,
@@ -389,19 +394,19 @@ if __name__ == '__main__':
                 "name": "Airbus A380",
                 "airplane_type": Airline.Bamboo_AirWays,
                 "business_class_seat_size": 5 * 6,
-                "economic_class_seat_size": 8 * 5,
+                "economic_class_seat_size": 8 * 8,
             },
             {
                 "name": "Boeing 777",
                 "airplane_type": Airline.VietNam_Airline,
                 "business_class_seat_size": 5 * 5,
-                "economic_class_seat_size": 4 * 7,
+                "economic_class_seat_size": 7 * 7,
             },
             {
                 "name": "Embraer E195",
                 "airplane_type": Airline.Vietjet_Air,
-                "business_class_seat_size": 2 * 4,
-                "economic_class_seat_size": 5 * 6,
+                "business_class_seat_size": 5 * 4,
+                "economic_class_seat_size": 8 * 6,
             }
         ]
 
@@ -438,7 +443,7 @@ if __name__ == '__main__':
             {"flight_code": "BB789", "flight_route_id": 3, "airplane_id": 3},
             {"flight_code": "VN101", "flight_route_id": 4, "airplane_id": 4},
             {"flight_code": "BB202", "flight_route_id": 5, "airplane_id": 5},
-            {"flight_code": "VJ303", "flight_route_id": 6, "airplane_id": 6},
+            {"flight_code": "VJ303", "flight_route_id": 1, "airplane_id": 6},
             {"flight_code": "BB57O", "flight_route_id": 1, "airplane_id": 7},
             {"flight_code": "A9125", "flight_route_id": 1, "airplane_id": 2}
         ]
@@ -454,8 +459,8 @@ if __name__ == '__main__':
                 "dep_time": datetime.datetime(2024, 12, 10, 8, 30),
                 "flight_time": 120,
                 "flight_id": 1,
-                "business_class_seat_size": 10,
-                "economic_class_seat_size": 12,
+                "business_class_seat_size": 15,
+                "economic_class_seat_size": 55,
                 "business_class_price": 1000000,
                 "economic_class_price": 1500000
             },
@@ -463,8 +468,8 @@ if __name__ == '__main__':
                 "dep_time": datetime.datetime(2024, 12, 10, 10, 0),
                 "flight_time": 90,
                 "flight_id": 2,
-                "business_class_seat_size": 10,
-                "economic_class_seat_size": 10,
+                "business_class_seat_size": 25,
+                "economic_class_seat_size": 60,
                 "business_class_price": 2000000,
                 "economic_class_price": 3000000
             },
@@ -472,8 +477,8 @@ if __name__ == '__main__':
                 "dep_time": datetime.datetime(2024, 12, 10, 12, 0),
                 "flight_time": 80,
                 "flight_id": 3,
-                "business_class_seat_size": 8,
-                "economic_class_seat_size": 8,
+                "business_class_seat_size": 20,
+                "economic_class_seat_size": 70,
                 "business_class_price": 1000000,
                 "economic_class_price": 1500000
             },
@@ -482,7 +487,7 @@ if __name__ == '__main__':
                 "flight_time": 100,
                 "flight_id": 4,
                 "business_class_seat_size": 15,
-                "economic_class_seat_size": 10,
+                "economic_class_seat_size": 50,
                 "business_class_price": 1500000,
                 "economic_class_price": 2000000
             },
@@ -490,17 +495,17 @@ if __name__ == '__main__':
                 "dep_time": datetime.datetime(2024, 12, 11, 8, 0),
                 "flight_time": 130,
                 "flight_id": 5,
-                "business_class_seat_size": 20,
-                "economic_class_seat_size": 10,
+                "business_class_seat_size": 30,
+                "economic_class_seat_size": 60,
                 "business_class_price": 4000000,
                 "economic_class_price": 5500000
             },
             {
-                "dep_time": datetime.datetime(2024, 12, 11, 14, 0),
+                "dep_time": datetime.datetime(2024, 12, 10, 14, 0),
                 "flight_time": 95,
                 "flight_id": 6,
-                "business_class_seat_size": 14,
-                "economic_class_seat_size": 14,
+                "business_class_seat_size": 20,
+                "economic_class_seat_size": 45,
                 "business_class_price": 1000000,
                 "economic_class_price": 1500000
             },
@@ -508,8 +513,8 @@ if __name__ == '__main__':
                 "dep_time": datetime.datetime(2024, 12, 10, 10, 30),
                 "flight_time": 115,
                 "flight_id": 7,
-                "business_class_seat_size": 8,
-                "economic_class_seat_size": 9,
+                "business_class_seat_size": 15,
+                "economic_class_seat_size": 45,
                 "business_class_price": 1000000,
                 "economic_class_price": 1500000
             },
@@ -517,8 +522,8 @@ if __name__ == '__main__':
                 "dep_time": datetime.datetime(2024, 12, 12, 17, 0),
                 "flight_time": 120,
                 "flight_id": 8,
-                "business_class_seat_size": 3,
-                "economic_class_seat_size": 5,
+                "business_class_seat_size": 10,
+                "economic_class_seat_size": 55,
                 "business_class_price": 1000000,
                 "economic_class_price": 1500000
             }
