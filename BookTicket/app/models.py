@@ -43,7 +43,7 @@ class User(BaseModel, UserMixin):
     active = Column(Boolean, default=True)
     user_role = Column(Enum(UserRole), default=UserRole.USER)
 
-    orders = relationship('Order', backref='user', lazy=True)
+    tickets = relationship('Ticket', backref='user', lazy=True)
 
 
 class Province(BaseModel):
@@ -268,37 +268,7 @@ class Ticket(BaseModel):
 
     seat_id = Column(Integer, ForeignKey(Seat.id), nullable=False)
     flight_schedule_id = Column(Integer, ForeignKey(FlightSchedule.id), nullable=False)
-
-    order_details = relationship('OrderDetail', backref='ticket', lazy=True)
-
-
-class Bill(BaseModel):
-    issueDate = Column(DateTime, nullable=False)
-    total = Column(Float, nullable=False)
-    is_Paid = Column(Boolean, default=False)
-    note = Column(String(100), nullable=True)
-    date_created = Column(DateTime, default=datetime.datetime.utcnow)
-
-    orders = relationship('Order', backref='bill', lazy=True)
-
-
-class Order(BaseModel):
-    order_day = Column(DateTime, nullable=False)
-    order_method = Column(Integer, default=1)
-    date_created = Column(DateTime, default=datetime.datetime.utcnow)
-
     cus_id = Column(Integer, ForeignKey(User.id), nullable=False)
-    bill_id = Column(Integer, ForeignKey(Bill.id), nullable=False)
-    order_details = relationship('OrderDetail', backref='order', lazy=True)
-
-
-class OrderDetail(BaseModel):
-    quantity = Column(Integer, default=1)
-    unit_price = Column(Float, nullable=True)
-    total = Column(Float, nullable=True)
-
-    ticket_id = Column(Integer, ForeignKey(Ticket.id), nullable=False)
-    order_id = Column(Integer, ForeignKey(Order.id), nullable=False)
 
 
 class Policy(BaseModel):
@@ -348,6 +318,7 @@ if __name__ == '__main__':
             p = Province(**p)
             db.session.add(p)
         db.session.commit()
+
         airports = [
             {"name": "Tân Sơn Nhất", "add": "Phường 2, 4 và 15, Quận Tân Bình", "province_id": 1},
             {"name": "Nội Bài", "add": "Số 200 đường Phạm Văn Đồng, Hà Nội", "province_id": 2},
