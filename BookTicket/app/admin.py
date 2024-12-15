@@ -2,7 +2,7 @@ from flask_sqlalchemy.model import Model
 from app import db, app
 from flask_admin import Admin, BaseView, expose
 from flask_admin.contrib.sqla import ModelView
-from app.models import Flight, FlightRoute, User, UserRole, IntermediateAirport
+from app.models import Flight, FlightRoute, User, UserRole, Policy
 from flask_login import current_user, logout_user
 from flask import redirect
 
@@ -23,6 +23,9 @@ class FlightView(AuthenticatedView):
     can_export = True
     # column_list = ['flight_code', 'flight_route', 'airplane']
     form_excluded_columns = ['flight_schedules', 'tickets', 'inter_airports']
+
+class PolicyView(AuthenticatedView):
+    can_create = False
 
 
 class MyView(BaseView):
@@ -47,5 +50,6 @@ admin = Admin(app, name='bookticket', template_mode='bootstrap4')
 
 admin.add_view(FlightRouteView(FlightRoute, db.session))
 admin.add_view(FlightView(Flight, db.session))
+admin.add_view(PolicyView(Policy, db.session))
 admin.add_view(StatsView(name="Report"))
 admin.add_view(LogoutView(name="Log out"))
