@@ -1,12 +1,13 @@
 from email.policy import default
 
-from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Enum, Date, DateTime, event
+from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Enum, Date, DateTime, event, UniqueConstraint
 from sqlalchemy.orm import relationship, validates, backref
 from app import db, app
 import hashlib
 from enum import Enum as RoleEnum
 from enum import Enum as AirlineEnum
 from enum import Enum as TicketClassEnum
+from enum import Enum as GenderEnum
 import datetime
 from flask_login import UserMixin
 import math
@@ -34,6 +35,10 @@ class TicketClass(TicketClassEnum):
     Business_Class = 1
     Economy_Class = 2
 
+class Gender(GenderEnum):
+    Mr = 1,
+    Ms = 2
+
 
 class User(BaseModel, UserMixin):
     name = Column(String(100), nullable=False)
@@ -44,6 +49,15 @@ class User(BaseModel, UserMixin):
     user_role = Column(Enum(UserRole), default=UserRole.USER)
 
     tickets = relationship('Ticket', backref='user', lazy=True)
+
+class Customer(BaseModel):
+    last_name = Column(String(50), nullable=False)
+    name = Column(String(50), nullable=False)
+    gender = Column(Enum(Gender), nullable=False)
+    birthday = Column(Date, nullable=False)
+
+    tickets = relationship('Ticket', backref='customer', lazy=True)
+
 
 
 class Province(BaseModel):
@@ -65,7 +79,7 @@ class Airport(BaseModel):
     intermediate_airports = relationship('IntermediateAirport', backref='airport', lazy=True)
 
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.province.name})"
 
 
 class FlightRoute(BaseModel):
@@ -167,7 +181,6 @@ class FlightSchedule(BaseModel):
     flight_id = Column(Integer, ForeignKey(Flight.id), nullable=False, unique=True)
 
     seat_assignments = relationship('SeatAssignment', backref='flight_schedule', lazy=True)
-    tickets = relationship('Ticket', backref='flight', lazy=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -195,6 +208,27 @@ class FlightSchedule(BaseModel):
         if self.economic_class_seat_size > airplane.economic_class_seat_size:
             raise ValueError(
                 f"Economic class seat size cannot exceed the airplane's economic capacity ({airplane.economic_class_seat_size})."
+            )
+
+        policy = db.session.query(Policy).first()
+        if policy is None:
+            raise ValueError("Policy information is missing. Please check the database.")
+
+        # Kiểm soát flight_time
+        if self.flight_time < policy.minimun_flight_time:
+            raise ValueError(
+                f"Flight time must be at least {policy.minimun_flight_time} minutes. Provided: {self.flight_time} minutes."
+            )
+
+        #Kiểm soát giá vé
+        if self.business_class_price < policy.ticket_price:
+            raise ValueError(
+                f"Business class price cannot be less than the policy ticket price ({policy.ticket_price}). Provided: {self.business_class_price}."
+            )
+
+        if self.economic_class_price < policy.ticket_price:
+            raise ValueError(
+                f"Economic class price cannot be less than the policy ticket price ({policy.ticket_price}). Provided: {self.economic_class_price}."
             )
 
     def create_seat_assignments(self):
@@ -240,7 +274,6 @@ class Seat(BaseModel):
 
     airplane_id = Column(Integer, ForeignKey(Airplane.id), nullable=False)
 
-    tickets = relationship('Ticket', backref='seat', lazy=True)
     seat_assignments = relationship('SeatAssignment', backref='seat', lazy=True)
 
     def __str__(self):
@@ -248,9 +281,17 @@ class Seat(BaseModel):
 
 
 class SeatAssignment(BaseModel):
-    seat_id = Column(Integer, ForeignKey(Seat.id), primary_key=True)
-    flight_schedule_id = Column(Integer, ForeignKey(FlightSchedule.id), primary_key=True)
-    is_available = Column(Boolean, default=1)
+    is_available = Column(Boolean, default=True, nullable=False)
+    flight_schedule_id = Column(Integer, ForeignKey(FlightSchedule.id), nullable=False)
+    seat_id = Column(Integer, ForeignKey(Seat.id), nullable=False)
+
+
+    tickets = relationship('Ticket', backref='seat_assignment', lazy=True)
+
+    # Ràng buộc unique để đảm bảo cặp seat_id và flight_schedule_id không trùng lặp
+    __table_args__ = (
+        UniqueConstraint('seat_id', 'flight_schedule_id', name='uq_seat_flight'),
+    )
 
 
 class IntermediateAirport(db.Model):
@@ -259,6 +300,34 @@ class IntermediateAirport(db.Model):
     stop_time = Column(Integer, default=20)
     note = Column(String(100), nullable=True)
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        # Lấy flight_id từ kwargs
+        flight_id = kwargs.get('flight_id')
+        if not flight_id:
+            raise ValueError("Flight ID must be provided.")
+
+        # Lấy thông tin Policy
+        policy = db.session.query(Policy).first()
+        if not policy:
+            raise ValueError("Policy information is missing. Please check the database.")
+
+        # Kiểm tra số lượng sân bay trung gian hiện tại của chuyến bay
+        current_inter_airports = db.session.query(IntermediateAirport).filter_by(flight_id=flight_id).count()
+
+        if current_inter_airports >= policy.max_inter_airport:
+            raise ValueError(
+                f"Cannot add more intermediate airports for this flight. Maximum allowed: {policy.max_inter_airport}."
+            )
+
+        # Kiểm soát giá trị stop_time
+        stop_time = kwargs.get('stop_time', self.stop_time)
+        if not (policy.minimum_stop_time <= stop_time <= policy.maximum_stop_time):
+            raise ValueError(
+                f"Stop time must be between {policy.minimum_stop_time} and {policy.maximum_stop_time}. Provided: {stop_time}."
+            )
+
     def __str__(self):
         return self.airport.name
 
@@ -266,53 +335,58 @@ class IntermediateAirport(db.Model):
 class Ticket(BaseModel):
     date_created = Column(DateTime, default=datetime.datetime.utcnow)
 
-    seat_id = Column(Integer, ForeignKey(Seat.id), nullable=False)
-    flight_schedule_id = Column(Integer, ForeignKey(FlightSchedule.id), nullable=False)
-    cus_id = Column(Integer, ForeignKey(User.id), nullable=False)
+    seat_assignment_id = Column(Integer, ForeignKey(SeatAssignment.id), nullable=False)
+    user_id = Column(Integer, ForeignKey(User.id), nullable=False)
+    customer_id = Column(Integer, ForeignKey(Customer.id), nullable=False)
 
 
 class Policy(BaseModel):
-    numberAirport = Column(Integer, nullable=False)
-    minimumFlightTime = Column(Integer, nullable=False)
-    maxIntermediateAirports = Column(Integer, nullable=False)
-    minStopTime = Column(Integer, nullable=False)
-    maxStopTime = Column(Integer, nullable=False)
-    numTicketClasses = Column(Integer, nullable=False)
-    ticketPrice = Column(Integer, nullable=False)
-    ticketSaleTime = Column(Integer, nullable=False)
-    ticketBookingTime = Column(Integer, nullable=False)
+    number_airport = Column(Integer, nullable=False)
+    minimun_flight_time = Column(Integer, nullable=False)
+    max_inter_airport = Column(Integer, nullable=False)
+    minimum_stop_time = Column(Integer, nullable=False)
+    maximum_stop_time = Column(Integer, nullable=False)
+    number_ticket_class = Column(Integer, nullable=False)
+    ticket_price = Column(Integer, nullable=False)
+    ticket_sell_time = Column(Integer, nullable=False)
+    ticket_booking_time = Column(Integer, nullable=False)
 
 
 if __name__ == '__main__':
     with app.app_context():
-        db.create_all()
+        # db.create_all()
+
+        new_policy = Policy(
+            number_airport=10,  # Số lượng sân bay tối đa
+            minimun_flight_time=30,  # Thời gian bay tối thiểu 30 phút
+            max_inter_airport=2,  # Số sân bay trung gian tối đa
+            minimum_stop_time=20,  # Thời gian dừng tối thiểu tại sân bay trung gian
+            maximum_stop_time=30,  # Thời gian dừng tối đa tại sân bay trung gian
+            number_ticket_class=2,  # Số hạng vé (2 hạng vé)
+            ticket_price=1000,  # Giá vé (ví dụ: 1000 là đơn vị tiền tệ)
+            ticket_sell_time=1440,  # Thời gian bán vé (ví dụ: 1440 phút = 1 ngày)
+            ticket_booking_time=240,  # Thời gian đặt vé (ví dụ: 240 phút = 4 giờ trước khi chuyến bay)
+        )
+        # Thêm vào session và commit
+        db.session.add(new_policy)
 
         u = User(name="admin", username="admin", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
                  avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1731852091/cld-sample-5.jpg",
                  user_role=UserRole.ADMIN)
         db.session.add(u)
         db.session.commit()
-        provinces = [{
-            "name": "TP HCM"
-        }, {
-            "name": "Hà Nội"
-        }, {
-            "name": "Đà Nẵng"
-        }, {
-            "name": "Nghệ An"
-        }, {
-            "name": "Cần Thơ"
-        }, {
-            "name": "Hải Phòng"
-        }, {
-            "name": "Đà Lạt"
-        }, {
-            "name": "Quảng Ninh"
-        }, {
-            "name": "Khánh Hòa"
-        }, {
-            "name": "Bình Dương"
-        }]
+        provinces = [
+            { "name": "TP HCM"},
+            {"name": "Hà Nội"},
+            {"name": "Đà Nẵng" },
+            {"name": "Nghệ An"},
+            { "name": "Cần Thơ"},
+            {  "name": "Hải Phòng"},
+            { "name": "Đà Lạt"},
+            { "name": "Quảng Ninh"},
+            { "name": "Khánh Hòa"},
+            {  "name": "Bình Dương"}
+        ]
 
         for p in provinces:
             p = Province(**p)
@@ -512,28 +586,17 @@ if __name__ == '__main__':
             # Dừng trung gian tại Đà Nẵng trong tuyến Tân Sơn Nhất - Nội Bài
             {"airport_id": 4, "flight_id": 2, "stop_time": 25, "note": "Chờ tiếp nhiên liệu"},
             # Dừng trung gian tại Vinh trong tuyến Nội Bài - Đà Nẵng
-            {"airport_id": 2, "flight_id": 3, "stop_time": 40, "note": "Kiểm tra kỹ thuật"},
+            {"airport_id": 2, "flight_id": 3, "stop_time": 20, "note": "Kiểm tra kỹ thuật"},
             # Dừng trung gian tại Nội Bài trong tuyến Đà Nẵng - Vinh
-            {"airport_id": 1, "flight_id": 4, "stop_time": 35, "note": "Thay đổi phi hành đoàn"},
+            {"airport_id": 1, "flight_id": 4, "stop_time": 25, "note": "Thay đổi phi hành đoàn"},
             # Dừng trung gian tại Tân Sơn Nhất trong tuyến Vinh - Cần Thơ
+            {"airport_id": 2, "flight_id": 4, "stop_time": 25, "note": "Thay đổi phi hành đoàn"}
         ]
 
         for intermediate in intermediate_airports:
             inter_airport = IntermediateAirport(**intermediate)
             db.session.add(inter_airport)
 
-        new_policy = Policy(
-            numberAirport=10,  # Số lượng sân bay tối đa
-            minimumFlightTime=30,  # Thời gian bay tối thiểu 30 phút
-            maxIntermediateAirports=2,  # Số sân bay trung gian tối đa
-            minStopTime=20,  # Thời gian dừng tối thiểu tại sân bay trung gian
-            maxStopTime=30,  # Thời gian dừng tối đa tại sân bay trung gian
-            numTicketClasses=2,  # Số hạng vé (2 hạng vé)
-            ticketPrice=1000,  # Giá vé (ví dụ: 1000 là đơn vị tiền tệ)
-            ticketSaleTime=1440,  # Thời gian bán vé (ví dụ: 1440 phút = 1 ngày)
-            ticketBookingTime=240,  # Thời gian đặt vé (ví dụ: 240 phút = 4 giờ trước khi chuyến bay)
-        )
-        # Thêm vào session và commit
-        db.session.add(new_policy)
+
 
         db.session.commit()
