@@ -1,0 +1,92 @@
+{% extends 'layout/base.html' %}
+
+{% block title %}Lịch Chuyến Bay{% endblock %}
+
+{% block content %}
+<h1 class="text-center text-primary mt-4">LỊCH CHUYẾN BAY</h1>
+
+<form action="/schedule" method="POST">
+    <!-- Mã chuyến bay -->
+    <div class="form-group mb-4">
+        <label for="flight_code">Mã chuyến bay</label>
+        <select class="form-control" id="flight_code" name="flight_code" required>
+            <option value="" disabled selected>Chọn mã chuyến bay</option>
+            <option value="VN123">VN123</option>
+            <option value="VN456">VN456</option>
+            <option value="VN789">VN789</option>
+        </select>
+    </div>
+
+    <!-- Thông tin sân bay -->
+    <div class="row border p-3 mb-4">
+        <!-- Sân bay đi -->
+        <div class="col-md-6 mb-3">
+            <label>Sân bay đi</label>
+            <input type="text" class="form-control" name="departure_airport" placeholder="Nhập sân bay đi"
+                   value="Tân Sơn Nhất">
+        </div>
+        <!-- Sân bay đến -->
+        <div class="col-md-6 mb-3">
+            <label>Sân bay đến</label>
+            <input type="text" class="form-control" name="arrival_airport" placeholder="Nhập sân bay đến"
+                   value="Nội Bài">
+        </div>
+        <!-- Thời gian khởi hành -->
+        <div class="col-md-6 mb-3">
+            <label>Thời gian khởi hành</label>
+            <input type="text" class="form-control" name="departure_time" placeholder="Nhập thời gian khởi hành"
+                   value="12:00, 10/12/2024">
+        </div>
+        <!-- Thời gian bay -->
+        <div class="col-md-6 mb-3">
+            <label>Thời gian bay</label>
+            <input type="text" class="form-control" name="flight_time" placeholder="Nhập thời gian bay"
+                   value="3 tiếng">
+        </div>
+        <!-- Số ghế thương gia -->
+        <div class="col-md-6 mb-3">
+            <label>Số ghế thương gia</label>
+            <input type="number" class="form-control" name="business_seats" placeholder="Nhập số ghế thương gia"
+                   value="2" min="0">
+        </div>
+        <!-- Số ghế phổ thông -->
+        <div class="col-md-6 mb-3">
+            <label>Số ghế phổ thông</label>
+            <input type="number" class="form-control" name="economic_seats" placeholder="Nhập số ghế phổ thông" value="1"
+                   min="0">
+        </div>
+    </div>
+
+    <!-- Sân bay trung gian -->
+    <h4 class="mt-4">Sân bay trung gian</h4>
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>STT</th>
+            <th>Sân bay trung gian</th>
+            <th>Thời gian dừng</th>
+            <th>Ghi chú</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>1</td>
+            <td><input type="text" class="form-control" name="transit_airport_1" placeholder="Nhập tên sân bay"></td>
+            <td><input type="text" class="form-control" name="transit_time_1" placeholder="Nhập thời gian dừng"></td>
+            <td><input type="text" class="form-control" name="note_1" placeholder="Ghi chú"></td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><input type="text" class="form-control" name="transit_airport_2" placeholder="Nhập tên sân bay"></td>
+            <td><input type="text" class="form-control" name="transit_time_2" placeholder="Nhập thời gian dừng"></td>
+            <td><input type="text" class="form-control" name="note_2" placeholder="Ghi chú"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- Nút xác nhận -->
+    <div class="text-center mt-4">
+        <button type="submit" class="btn btn-danger btn-lg">Xác nhận lập lịch</button>
+    </div>
+</form>
+{% endblock %}

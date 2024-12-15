@@ -1,0 +1,96 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+<h1 class="text-center text-primary mt-4">THÔNG TIN HÀNH KHÁCH VÀ THANH TOÁN</h1>
+
+<!-- Thông tin liên hệ -->
+<h4 class="mt-4">Thông tin liên hệ</h4>
+<form action="/booking" method="POST">
+    <div class="row border p-3 mb-4">
+        <div class="col-md-6 mb-3">
+            <label for="contact_name">Họ và tên</label>
+            <input type="text" class="form-control" id="contact_name" placeholder="Nhập họ và tên" name="contact_name" required>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="contact_id">CMND/CCCD</label>
+            <input type="text" class="form-control" id="contact_id" placeholder="Nhập CMND/CCCD" name="contact_id" required>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="contact_phone">Số Điện Thoại</label>
+            <input type="text" class="form-control" id="contact_phone" placeholder="Nhập số điện thoại" name="contact_phone" required>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="contact_email">Email</label>
+            <input type="email" class="form-control" id="contact_email" placeholder="Nhập email" name="contact_email" required>
+        </div>
+    </div>
+
+    <!-- Chi tiết hành khách -->
+    <h4 class="mt-4">Chi tiết hành khách</h4>
+    <div class="row border p-3 mb-4">
+        <div class="col-md-6 mb-3">
+            <label for="passenger_name">Họ và tên</label>
+            <input type="text" class="form-control" id="passenger_name" placeholder="Nhập họ và tên" name="passenger_name" required>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="passenger_id">CMND/CCCD</label>
+            <input type="text" class="form-control" id="passenger_id" placeholder="Nhập CMND/CCCD" name="passenger_id" required>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="passenger_birth">Ngày sinh</label>
+            <input type="date" class="form-control" id="passenger_birth" name="passenger_birth" required>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="passenger_nation">Quốc tịch</label>
+            <input type="text" class="form-control" id="passenger_nation" placeholder="Nhập quốc tịch" name="passenger_nation" required>
+        </div>
+    </div>
+
+    <!-- Tóm tắt chuyến bay -->
+    <h4 class="mt-4">Tóm tắt chuyến bay</h4>
+    <div class="row border p-3 mb-4">
+        <div class="col-md-6">
+            <strong>Chuyến bay đi</strong><br>
+            <span>TP. HCM</span>
+            <span class="ml-2 mr-2">&rarr;</span>
+            <span>Hà Nội</span><br>
+            <span>Thứ 3, 10/10/2002 | 09:30 - 12:30</span> <br>
+            <span class="text-muted">Bay thẳng | 3h 0m</span>
+        </div>
+        <div class="col-md-6">
+            <strong>Chuyến bay về</strong><br>
+            <span>Hà Nội</span>
+            <span class="ml-2 mr-2">&rarr;</span>
+            <span>TP. HCM</span><br>
+            <span>Thứ 6, 13/10/2002 | 12:30 - 15:30</span> <br>
+            <span class="text-muted">Bay thẳng | 3h 0m</span>
+        </div>
+    </div>
+
+    <!-- Chi tiết giá -->
+    <h4 class="mt-4">Chi tiết giá</h4>
+    <div class="border p-3 mb-4">
+        <div class="row">
+            <div class="col-md-8">
+                <strong>Người lớn (1 khách)</strong>
+            </div>
+            <div class="col-md-4 text-right">
+                <span>2.320.000 VND</span>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-8">
+                <h5><strong>Tổng cộng</strong></h5>
+            </div>
+            <div class="col-md-4 text-right">
+                <h5><strong>2.320.000 VND</strong></h5>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nút thanh toán -->
+    <div class="text-center mt-4">
+        <button type="submit" class="btn btn-danger btn-lg">Thanh toán</button>
+    </div>
+</form>
+{% endblock %}
