@@ -156,3 +156,4 @@ def load_flights(departure, destination, departure_date):
     ]
 
     return flights
+
