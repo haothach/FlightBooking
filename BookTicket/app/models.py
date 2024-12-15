@@ -79,7 +79,7 @@ class Airport(BaseModel):
     intermediate_airports = relationship('IntermediateAirport', backref='airport', lazy=True)
 
     def __str__(self):
-        return f"{self.name} ({self.province.name})"
+        return f"{self.province.name} ({self.name})"
 
 
 class FlightRoute(BaseModel):
@@ -354,7 +354,7 @@ class Policy(BaseModel):
 
 if __name__ == '__main__':
     with app.app_context():
-        # db.create_all()
+        db.create_all()
 
         new_policy = Policy(
             number_airport=10,  # Số lượng sân bay tối đa
