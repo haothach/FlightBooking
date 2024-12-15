@@ -21,53 +21,70 @@
 
 
 
-const departureSelect = document.getElementById('departure');
-const destinationSelect = document.getElementById('destination');
 const depAirportSelect = document.getElementById('dep_airport');
 const desAirportSelect = document.getElementById('des_airport');
+const departureSelect = document.getElementById('departure');
+const destinationSelect = document.getElementById('destination');
 
+// Hàm chung để cập nhật tùy chọn của hai select
 function updateSelectOptions(selectA, selectB) {
     const valueA = selectA.value;
     const valueB = selectB.value;
 
-    // Hiện tất cả các tùy chọn trước khi áp dụng ẩn
-    for (let option of selectA.options) {
-        option.style.display = 'block';
-    }
+    // Bỏ vô hiệu hóa tất cả các tùy chọn trong selectB
     for (let option of selectB.options) {
-        option.style.display = 'block';
+        option.disabled = false;  // Bỏ vô hiệu hóa tất cả các option
     }
 
-    // Ẩn lựa chọn của selectA ở selectB nếu có giá trị
+    // Bỏ vô hiệu hóa tất cả các tùy chọn trong selectA
+    for (let option of selectA.options) {
+        option.disabled = false;  // Bỏ vô hiệu hóa tất cả các option
+    }
+
+    // Vô hiệu hóa lựa chọn của selectA ở selectB nếu có giá trị
     if (valueA) {
         for (let option of selectB.options) {
             if (option.value === valueA) {
-                option.style.display = 'none';
+                option.disabled = true;  // Vô hiệu hóa option trùng lặp
             }
         }
     }
 
-    // Ẩn lựa chọn của selectB ở selectA nếu có giá trị
+    // Vô hiệu hóa lựa chọn của selectB ở selectA nếu có giá trị
     if (valueB) {
         for (let option of selectA.options) {
             if (option.value === valueB) {
-                option.style.display = 'none';
+                option.disabled = true;  // Vô hiệu hóa option trùng lặp
             }
         }
     }
 }
 
 // Đăng ký sự kiện thay đổi cho các select
-departureSelect.addEventListener('change', () => updateSelectOptions(departureSelect, destinationSelect));
-destinationSelect.addEventListener('change', () => updateSelectOptions(departureSelect, destinationSelect));
-depAirportSelect.addEventListener('change', () => updateSelectOptions(depAirportSelect, desAirportSelect));
-desAirportSelect.addEventListener('change', () => updateSelectOptions(depAirportSelect, desAirportSelect));
+depAirportSelect.addEventListener('change', () => {
+    updateSelectOptions(depAirportSelect, desAirportSelect);
+    updateSelectOptions(departureSelect, destinationSelect); // Cập nhật cả 2 cặp
+});
+desAirportSelect.addEventListener('change', () => {
+    updateSelectOptions(depAirportSelect, desAirportSelect);
+    updateSelectOptions(departureSelect, destinationSelect); // Cập nhật cả 2 cặp
+});
+departureSelect.addEventListener('change', () => {
+    updateSelectOptions(depAirportSelect, desAirportSelect);
+    updateSelectOptions(departureSelect, destinationSelect); // Cập nhật cả 2 cặp
+});
+destinationSelect.addEventListener('change', () => {
+    updateSelectOptions(depAirportSelect, desAirportSelect);
+    updateSelectOptions(departureSelect, destinationSelect); // Cập nhật cả 2 cặp
+});
 
 // Đảm bảo rằng các sự kiện sẽ chỉ chạy khi DOM đã sẵn sàng
 document.addEventListener('DOMContentLoaded', () => {
-    updateSelectOptions(departureSelect, destinationSelect);
     updateSelectOptions(depAirportSelect, desAirportSelect);
+    updateSelectOptions(departureSelect, destinationSelect);
 });
+
+
 
 
 
