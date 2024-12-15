@@ -117,13 +117,19 @@ def logout_process():
 def load_user(user_id):
     return dao.get_user_by_id(user_id)
 
+
 @app.route('/booking')
 def book_tickets():
     return render_template('booking.html')
 
+
 @app.route('/schedule')
 def flight_schedule():
-    return render_template('schedule.html')
+    flightcodes = dao.load_flight()
+    airports = dao.load_airport()
+
+    return render_template('schedule.html', flightcodes=flightcodes, airports=airports)
+
 
 if __name__ == '__main__':
     from app import admin

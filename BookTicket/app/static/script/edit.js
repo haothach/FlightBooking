@@ -18,43 +18,60 @@
        }
    });
 
-   const departureSelect = document.getElementById('departure');
-   const destinationSelect = document.getElementById('destination');
 
-   function updateOptions() {
-       const departureValue = departureSelect.value;
-       const destinationValue = destinationSelect.value;
 
-       // Hiện tất cả các tùy chọn trước khi áp dụng ẩn
-       for (let option of departureSelect.options) {
-           option.style.display = 'block';
-       }
-       for (let option of destinationSelect.options) {
-           option.style.display = 'block';
-       }
 
-       // Ẩn lựa chọn "Điểm đến" ở "Điểm đi" và ngược lại
-       if (departureValue) {
-           for (let option of destinationSelect.options) {
-               if (option.value === departureValue) {
-                   option.style.display = 'none';
-               }
-           }
-       }
+const departureSelect = document.getElementById('departure');
+const destinationSelect = document.getElementById('destination');
+const depAirportSelect = document.getElementById('dep_airport');
+const desAirportSelect = document.getElementById('des_airport');
 
-       if (destinationValue) {
-           for (let option of departureSelect.options) {
-               if (option.value === destinationValue) {
-                   option.style.display = 'none';
-               }
-           }
-       }
-   }
+function updateSelectOptions(selectA, selectB) {
+    const valueA = selectA.value;
+    const valueB = selectB.value;
 
-   departureSelect.addEventListener('change', updateOptions);
-   destinationSelect.addEventListener('change', updateOptions);
+    // Hiện tất cả các tùy chọn trước khi áp dụng ẩn
+    for (let option of selectA.options) {
+        option.style.display = 'block';
+    }
+    for (let option of selectB.options) {
+        option.style.display = 'block';
+    }
 
-   document.addEventListener('DOMContentLoaded', updateOptions);
+    // Ẩn lựa chọn của selectA ở selectB nếu có giá trị
+    if (valueA) {
+        for (let option of selectB.options) {
+            if (option.value === valueA) {
+                option.style.display = 'none';
+            }
+        }
+    }
+
+    // Ẩn lựa chọn của selectB ở selectA nếu có giá trị
+    if (valueB) {
+        for (let option of selectA.options) {
+            if (option.value === valueB) {
+                option.style.display = 'none';
+            }
+        }
+    }
+}
+
+// Đăng ký sự kiện thay đổi cho các select
+departureSelect.addEventListener('change', () => updateSelectOptions(departureSelect, destinationSelect));
+destinationSelect.addEventListener('change', () => updateSelectOptions(departureSelect, destinationSelect));
+depAirportSelect.addEventListener('change', () => updateSelectOptions(depAirportSelect, desAirportSelect));
+desAirportSelect.addEventListener('change', () => updateSelectOptions(depAirportSelect, desAirportSelect));
+
+// Đảm bảo rằng các sự kiện sẽ chỉ chạy khi DOM đã sẵn sàng
+document.addEventListener('DOMContentLoaded', () => {
+    updateSelectOptions(departureSelect, destinationSelect);
+    updateSelectOptions(depAirportSelect, desAirportSelect);
+});
+
+
+
+
 
     const departureDateInput = document.getElementById('departure-date');
 
@@ -82,3 +99,16 @@
             }, 3000); // 3000ms = 3 giây
         });
     });
+
+    //Nút tick hiển thị sân bay trung gian
+    function toggleTransitFields() {
+        var checkbox = document.getElementById('enableTransit');
+        var transitTable = document.getElementById('transitTable');
+
+        // Hiển thị hoặc ẩn bảng sân bay trung gian khi checkbox được tick
+        if (checkbox.checked) {
+            transitTable.style.display = 'table';
+        } else {
+            transitTable.style.display = 'none';
+        }
+    }

@@ -8,58 +8,128 @@
 <form action="/schedule" method="POST">
     <!-- Mã chuyến bay -->
     <div class="form-group mb-4">
-        <label for="flight_code">Mã chuyến bay</label>
+        <label for="flight_code" class="font-weight-bold">Mã chuyến bay</label>
         <select class="form-control" id="flight_code" name="flight_code" required>
             <option value="" disabled selected>Chọn mã chuyến bay</option>
-            <option value="VN123">VN123</option>
-            <option value="VN456">VN456</option>
-            <option value="VN789">VN789</option>
+            {% for f in flightcodes %}
+            <option value="{{ f.id }}">{{f.flight_code}}</option>
+            {% endfor %}
         </select>
     </div>
 
     <!-- Thông tin sân bay -->
     <div class="row border p-3 mb-4">
         <!-- Sân bay đi -->
-        <div class="col-md-6 mb-3">
-            <label>Sân bay đi</label>
-            <input type="text" class="form-control" name="departure_airport" placeholder="Nhập sân bay đi"
-                   value="Tân Sơn Nhất">
+        <div class="col-md-6">
+            <label for="dep_airport" class="form-label font-weight-bold">Sân bay đi</label>
+            <select class="form-select" id="dep_airport" name="dep_airport">
+                {% for a in airports %}
+                <option value="{{ a.id }}">{{a.name}}</option>
+                {% endfor %}
+            </select>
         </div>
         <!-- Sân bay đến -->
-        <div class="col-md-6 mb-3">
-            <label>Sân bay đến</label>
-            <input type="text" class="form-control" name="arrival_airport" placeholder="Nhập sân bay đến"
-                   value="Nội Bài">
+        <div class="col-md-6">
+            <label for="des_airport" class="form-label font-weight-bold">Sân bay đến</label>
+            <select class="form-select" id="des_airport" name="des_airport">
+                {% for a in airports %}
+                <option value="{{ a.id }}">{{a.name}}</option>
+                {% endfor %}
+            </select>
         </div>
         <!-- Thời gian khởi hành -->
-        <div class="col-md-6 mb-3">
-            <label>Thời gian khởi hành</label>
-            <input type="text" class="form-control" name="departure_time" placeholder="Nhập thời gian khởi hành"
-                   value="12:00, 10/12/2024">
+        <div class="row mb-3">
+            <!-- Thời gian khởi hành -->
+            <div class="col-md-8"> <!-- Chiếm 8 cột trên màn hình lớn -->
+                <label class="font-weight-bold">Thời gian khởi hành</label>
+                <div class="row">
+                    <!-- Giờ -->
+                    <div class="col-md-2">
+                        <label for="hour" class="form-label font-weight-bold mr-2">Giờ:</label>
+                        <input type="number" class="form-control" id="hour" name="hour" min="0" max="23"
+                               placeholder="Giờ" required>
+                    </div>
+
+                    <!-- Phút -->
+                    <div class="col-md-2">
+                        <label for="minute" class="form-label font-weight-bold mr-2">Phút:</label>
+                        <input type="number" class="form-control" id="minute" name="minute" min="0" max="59"
+                               placeholder="Phút" required>
+                    </div>
+
+                    <!-- Ngày -->
+                    <div class="col-md-2">
+                        <label for="day" class="form-label font-weight-bold mr-2">Ngày:</label>
+                        <input type="number" class="form-control" id="day" name="day" min="1" max="31"
+                               placeholder="Ngày" required>
+                    </div>
+
+                    <!-- Tháng -->
+                    <div class="col-md-2">
+                        <label for="month" class="form-label font-weight-bold mr-2">Tháng:</label>
+                        <input type="number" class="form-control" id="month" name="month" min="1" max="12"
+                               placeholder="Tháng" required>
+                    </div>
+
+                    <!-- Năm -->
+                    <div class="col-md-2">
+                        <label for="year" class="form-label font-weight-bold mr-2">Năm:</label>
+                        <input type="number" class="form-control" id="year" name="year" min="2024" placeholder="Năm"
+                               required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thời gian bay -->
+            <div class="col-md-4"> <!-- Chiếm 4 cột trên màn hình lớn -->
+                <label class="font-weight-bold">Thời gian bay</label>
+                <div class="row">
+                    <!-- Giờ -->
+                    <div class="col-md-3">
+                        <label for="flight_hour" class="form-label font-weight-bold mr-2">Giờ:</label>
+                        <input type="number" class="form-control" id="flight_hour" name="flight_hour" min="0" max="23"
+                               placeholder="Giờ" required>
+                    </div>
+
+                    <!-- Phút -->
+                    <div class="col-md-3">
+                        <label for="flight_minute" class="form-label font-weight-bold mr-2">Phút:</label>
+                        <input type="number" class="form-control" id="flight_minute" name="flight_minute" min="0"
+                               max="59" placeholder="Phút" required>
+                    </div>
+                </div>
+            </div>
         </div>
-        <!-- Thời gian bay -->
-        <div class="col-md-6 mb-3">
-            <label>Thời gian bay</label>
-            <input type="text" class="form-control" name="flight_time" placeholder="Nhập thời gian bay"
-                   value="3 tiếng">
-        </div>
+
+
         <!-- Số ghế thương gia -->
         <div class="col-md-6 mb-3">
-            <label>Số ghế thương gia</label>
+            <label class="font-weight-bold">Số ghế thương gia</label>
             <input type="number" class="form-control" name="business_seats" placeholder="Nhập số ghế thương gia"
                    value="2" min="0">
         </div>
         <!-- Số ghế phổ thông -->
         <div class="col-md-6 mb-3">
-            <label>Số ghế phổ thông</label>
-            <input type="number" class="form-control" name="economic_seats" placeholder="Nhập số ghế phổ thông" value="1"
+            <label class="font-weight-bold">Số ghế phổ thông</label>
+            <input type="number" class="form-control" name="economic_seats" placeholder="Nhập số ghế phổ thông"
+                   value="1"
                    min="0">
         </div>
     </div>
 
     <!-- Sân bay trung gian -->
-    <h4 class="mt-4">Sân bay trung gian</h4>
-    <table class="table table-bordered">
+    <h4 class="mt-4 font-weight-bold">Sân bay trung gian</h4>
+
+    <!-- Checkbox để bật/tắt nhập liệu sân bay trung gian -->
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="checkbox" id="enableTransit" onclick="toggleTransitFields()">
+        <label class="form-check-label" for="enableTransit">
+            Thêm sân bay trung gian
+        </label>
+    </div>
+
+    <!-- Bảng sân bay trung gian, ban đầu ẩn -->
+    <table class="table table-bordered" id="transitTable" style="display:none;">
         <thead>
         <tr>
             <th>STT</th>

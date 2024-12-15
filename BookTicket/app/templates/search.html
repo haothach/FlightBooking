@@ -107,13 +107,13 @@
                 </div>
                 <div class="col-md-6 text-center">
                     <p class="text-muted">Thời gian bay: {{f.flight_time}}</p>
-                    {% if not intermediate_airport %}
+                    {% if not f.intermediate_airport or f.intermediate_airport == 'None' %}
                     <p class="mb-0">Bay thẳng</p>
                     {% else %}
                     <p class="mb-0">Sân bay trung gian: {{ f.intermediate_airport }}</p>
                     <p class="text-muted">Thời gian dừng: {{ f.stop_time }}</p>
                     {% endif %}
-                    <p>{{f.flight_code}} Khai thác bởi {{f.airline_name}}</p>
+                    <p>{{f.flight_code}} Khai thác bởi {{f.airline_name.replace("_", " ")}}</p>
                     <a href="#">Chi tiết hành trình</a>
                 </div>
                 <div class="col-md-3 text-center">
