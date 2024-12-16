@@ -122,18 +122,43 @@
                 </div>
                 <div class="col-md-12 mt-3">
                     <div class="d-flex">
-                        <div class="flex-grow-1 text-center border-end">
+                        <!-- Form dành riêng cho PHỔ THÔNG -->
+                        <form action="/booking" method="GET" class="flex-grow-1 text-center border-end">
                             <p class="fw-bold text-primary">PHỔ THÔNG</p>
-                            <p>Từ <span class="text-success">{{ "{:,.0f}".format(f.economic_price).replace(',', '.') }}</span> VNĐ</p>
-                            <p class="text-muted">Còn lại: {{ f.remaining_economic_seats }} ghế</p>
-                            <button class="btn btn-primary">Chọn</button>
-                        </div>
-                        <div class="flex-grow-1 text-center">
+                            <p>Từ <span
+                                    class="text-success">{{ "{:,.0f}".format(f.economy_price).replace(',', '.') }}</span>
+                                VNĐ</p>
+                            <p class="text-muted">Còn lại: {{ f.remaining_economy_seats }} ghế</p>
+                            <input type="hidden" name="passenger" value="{{ request.args.get('passenger') }}">
+                            <input type="hidden" name="departure" value="{{ departure }}">
+                            <input type="hidden" name="destination" value="{{ destination }}">
+                            <input type="hidden" name="class" value="economy">
+                            <input type="hidden" name="departure_date" value="{{ departure_date }}">
+                            <input type="hidden" name="departure_time" value="{{ f.departure_time.strftime('%H:%M') }}">
+                            <input type="hidden" name="arrival_time" value="{{ f.arrival_time.strftime('%H:%M') }}">
+                            <input type="hidden" name="flight_time" value="{{ f.flight_time }}">
+                            <input type="hidden" name="price" value="{{ f.economy_price }}">
+                            <button type="submit" class="btn btn-primary">Chọn</button>
+                        </form>
+
+                        <!-- Form dành riêng cho THƯƠNG GIA -->
+                        <form action="/booking" method="GET" class="flex-grow-1 text-center">
                             <p class="fw-bold text-warning">THƯƠNG GIA</p>
-                            <p>Từ <span class="text-success">{{ "{:,.0f}".format(f.business_price).replace(',', '.') }}</span> VNĐ</p>
+                            <p>Từ <span
+                                    class="text-success">{{ "{:,.0f}".format(f.business_price).replace(',', '.') }}</span>
+                                VNĐ</p>
                             <p class="text-muted">Còn lại: {{ f.remaining_business_seats }} ghế</p>
-                            <button class="btn btn-warning">Chọn</button>
-                        </div>
+                            <input type="hidden" name="passenger" value="{{ request.args.get('passenger') }}">
+                            <input type="hidden" name="departure" value="{{ departure }}">
+                            <input type="hidden" name="destination" value="{{ destination }}">
+                            <input type="hidden" name="class" value="business">
+                            <input type="hidden" name="departure_date" value="{{ departure_date }}">
+                            <input type="hidden" name="departure_time" value="{{ f.departure_time.strftime('%H:%M') }}">
+                            <input type="hidden" name="arrival_time" value="{{ f.arrival_time.strftime('%H:%M')  }}">
+                            <input type="hidden" name="flight_time" value="{{ f.flight_time }}">
+                            <input type="hidden" name="price" value="{{ f.business_price }}">
+                            <button type="submit" class="btn btn-warning">Chọn</button>
+                        </form>
                     </div>
                 </div>
             </div>
