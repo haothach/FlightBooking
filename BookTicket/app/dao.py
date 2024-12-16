@@ -10,11 +10,11 @@ def load_province():
     return Province.query.order_by('name').all()
 
 
-def load_flight_route():
-    return Flight.query.order_by('id').all()
+def load_airport():
+    return Airport.query.order_by('id').all()
 
 
-def load_flight(departure=None, destination=None):
+def load_flight():
     return Flight.query.order_by('id').all()
 
 

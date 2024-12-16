@@ -24,7 +24,6 @@ class UserRole(RoleEnum):
     USER = 2
     STAFF = 3
 
-
 class Airline(AirlineEnum):
     Bamboo_AirWays = 1
     Vietjet_Air = 2
@@ -34,6 +33,7 @@ class Airline(AirlineEnum):
 class TicketClass(TicketClassEnum):
     Business_Class = 1
     Economy_Class = 2
+
 
 class Gender(GenderEnum):
     Mr = 1
@@ -50,6 +50,7 @@ class User(BaseModel, UserMixin):
 
     tickets = relationship('Ticket', backref='user', lazy=True)
 
+
 class Customer(BaseModel):
     last_name = Column(String(50), nullable=False)
     name = Column(String(50), nullable=False)
@@ -57,7 +58,6 @@ class Customer(BaseModel):
     birthday = Column(Date, nullable=False)
 
     tickets = relationship('Ticket', backref='customer', lazy=True)
-
 
 
 class Province(BaseModel):
@@ -284,7 +284,6 @@ class SeatAssignment(BaseModel):
     is_available = Column(Boolean, default=True, nullable=False)
     flight_schedule_id = Column(Integer, ForeignKey(FlightSchedule.id), nullable=False)
     seat_id = Column(Integer, ForeignKey(Seat.id), nullable=False)
-
 
     tickets = relationship('Ticket', backref='seat_assignment', lazy=True)
 
@@ -596,7 +595,5 @@ if __name__ == '__main__':
         for intermediate in intermediate_airports:
             inter_airport = IntermediateAirport(**intermediate)
             db.session.add(inter_airport)
-
-
 
         db.session.commit()

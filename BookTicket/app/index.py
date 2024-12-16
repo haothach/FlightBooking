@@ -122,6 +122,7 @@ def logout_process():
 def load_user(user_id):
     return dao.get_user_by_id(user_id)
 
+
 @app.route('/booking')
 def book_tickets():
     passenger = int(request.args.get('passenger', 1))
@@ -173,9 +174,14 @@ def add_customer():
     return redirect('/')  # Trỏ về trang tóm tắt chuyến bay hoặc thanh toán
 
 
+
 @app.route('/schedule')
 def flight_schedule():
-    return render_template('schedule.html')
+    flightcodes = dao.load_flight()
+    airports = dao.load_airport()
+
+    return render_template('schedule.html', flightcodes=flightcodes, airports=airports)
+
 
 if __name__ == '__main__':
     from app import admin
