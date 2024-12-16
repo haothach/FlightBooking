@@ -2,10 +2,12 @@ import hashlib
 import string
 
 from flask import render_template, request, redirect,flash
+from sqlalchemy import Integer
+
 import dao
-from app import app, login
+from app import app, login, db
 from flask_login import login_user, logout_user
-from app.models import UserRole
+from app.models import UserRole, Customer, Gender
 from datetime import datetime
 
 
@@ -23,12 +25,15 @@ def index():
 def search():
     departure = request.args.get('departure')
     destination = request.args.get('destination')
-    departure_date = request.args.get('departure-date')
-    passenger = request.args.get('passengers')
+    departure_date = request.args.get('departure_date')
+    passenger = request.args.get('passenger')
     time_range = request.args.get('time_range')
     arrival_time_range = request.args.get('arrival_time_range')
     # Lấy danh sách chuyến bay
     flights = dao.load_flights(departure, destination, departure_date)
+
+    formatted_date = datetime.strptime(departure_date, '%Y-%m-%d').strftime('%d/%m/%Y')
+
 
     # Lọc theo giờ cất cánh (nếu có)
     if time_range:
@@ -59,7 +64,7 @@ def search():
     #     return redirect('/')
 
     return render_template('search.html', departure=departure, destination=destination,
-                           departure_date=departure_date, passenger=passenger, flights=flights)
+                           departure_date=formatted_date, passenger=passenger, flights=flights)
 
 
 @app.route("/register", methods=['get', 'post'])
@@ -119,7 +124,54 @@ def load_user(user_id):
 
 @app.route('/booking')
 def book_tickets():
-    return render_template('booking.html')
+    passenger = int(request.args.get('passenger', 1))
+    departure = request.args.get('departure')
+    destination = request.args.get('destination')
+    departure_date = request.args.get('departure_date')
+    flight_time = request.args.get('flight_time')
+    departure_time = request.args.get('departure_time')
+    arrival_time = request.args.get('arrival_time')
+    price = int(request.args.get('price'))
+    ticket_class = request.args.get('class').capitalize()
+
+    formatted_price = "{:,.0f}".format(price).replace(',', '.')
+
+    total = price * passenger
+    formatted_total = "{:,.0f}".format(total).replace(',', '.')
+
+
+    return render_template('booking.html', departure=departure, destination=destination, passenger=passenger,
+                           departure_date=departure_date, flight_time=flight_time, departure_time=departure_time, arrival_time=arrival_time,
+                           price=formatted_price, ticket_class=ticket_class, total=formatted_total)
+
+@app.route('/add_customer', methods=['POST'])
+def add_customer():
+
+    # Xử lý từng hành khách
+    for p in range(int(request.form.get('passenger_count'))):  # Dùng hidden input để truyền số lượng
+        name = request.form.get(f'passenger_name_{p}')
+        birth_date = request.form.get(f'passenger_birth_{p}')
+        gender = request.form.get(f'passenger_gender_{p}')
+
+        # Chuyển đổi ngày sinh về định dạng datetime
+        birthday = datetime.strptime(birth_date, '%Y-%m-%d').date()
+
+        # Tạo đối tượng Customer
+        customer = Customer(
+            name=name.split(" ", 1)[-1],  # Lấy tên
+            last_name=name.split(" ", 1)[0],  # Lấy họ
+            gender=Gender.Mr if gender.__eq__('Male') else Gender.Ms,  # Map giá trị
+            birthday=birthday
+        )
+
+        # Thêm vào session
+        db.session.add(customer)
+
+        # Lưu thay đổi vào DB
+    db.session.commit()
+
+    return redirect('/')  # Trỏ về trang tóm tắt chuyến bay hoặc thanh toán
+
 
 @app.route('/schedule')
 def flight_schedule():

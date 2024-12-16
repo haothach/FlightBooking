@@ -62,7 +62,7 @@ def load_flights(departure, destination, departure_date):
         SELECT 
             f.flight_code,  -- Mã chuyến bay
             fs.business_class_price AS business_price,  -- Giá vé hạng 1
-            fs.economic_class_price AS economic_price,  -- Giá vé hạng 2
+            fs.economy_class_price AS economy_price,  -- Giá vé hạng 2
             dep_airport.name AS departure_airport,  -- Sân bay đi
             des_airport.name AS destination_airport,  -- Sân bay đến
             fs.dep_time AS departure_time,  -- Giờ khởi hành
@@ -95,7 +95,7 @@ def load_flights(departure, destination, departure_date):
             (SELECT COUNT(*) 
              FROM seat_assignment sa
              JOIN seat s ON sa.seat_id = s.id
-             WHERE sa.flight_schedule_id = fs.id AND sa.is_available = 1 AND s.seat_class = 2) AS remaining_economic_seats  
+             WHERE sa.flight_schedule_id = fs.id AND sa.is_available = 1 AND s.seat_class = 2) AS remaining_economy_seats  
         FROM 
             flight_schedule fs
         JOIN 
@@ -123,9 +123,9 @@ def load_flights(departure, destination, departure_date):
             AND des_province.name = %s  -- Tên tỉnh sân bay đến
             AND DATE(fs.dep_time) = %s  -- Ngày khởi hành
         GROUP BY 
-            f.flight_code, fs.business_class_price, fs.economic_class_price, dep_airport.name, des_airport.name, 
+            f.flight_code, fs.business_class_price, fs.economy_class_price, dep_airport.name, des_airport.name, 
             fs.dep_time, fs.flight_time, a.name, ap.name, ia.airport_id, ia.stop_time, fs.business_class_seat_size, 
-            fs.economic_class_seat_size;
+            fs.economy_class_seat_size;
 
     """
     # Thực thi truy vấn
@@ -139,7 +139,7 @@ def load_flights(departure, destination, departure_date):
         {
             "flight_code": row[0],  # Mã chuyến bay
             "business_price": row[1],  # Giá vé hạng 1
-            "economic_price": row[2],  # Giá vé hạng 2
+            "economy_price": row[2],  # Giá vé hạng 2
             "departure_airport": row[3],  # Sân bay đi
             "destination_airport": row[4],  # Sân bay đến
             "departure_time": row[5],  # Giờ khởi hành
@@ -150,7 +150,7 @@ def load_flights(departure, destination, departure_date):
             "intermediate_airport": row[10],  # Tên sân bay trung gian
             "stop_time": row[11],  # Thời gian dừng
             "remaining_business_seats": row[12],  # Số ghế hạng 1 còn lại
-            "remaining_economic_seats": row[13],  # Số ghế hạng 2 còn lại
+            "remaining_economy_seats": row[13],  # Số ghế hạng 2 còn lại
         }
         for row in results
     ]

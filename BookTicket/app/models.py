@@ -36,7 +36,7 @@ class TicketClass(TicketClassEnum):
     Economy_Class = 2
 
 class Gender(GenderEnum):
-    Mr = 1,
+    Mr = 1
     Ms = 2
 
 
@@ -114,7 +114,7 @@ class Airplane(BaseModel):
     name = Column(String(100), nullable=False)
     airplane_type = Column(Enum(Airline), nullable=False)
     business_class_seat_size = Column(Integer, nullable=False)
-    economic_class_seat_size = Column(Integer, nullable=False)
+    economy_class_seat_size = Column(Integer, nullable=False)
 
     flights = relationship('Flight', backref='airplane', lazy=True)
     seats = relationship('Seat', backref='airplane', lazy=True)
@@ -141,9 +141,9 @@ class Airplane(BaseModel):
                 ))
 
         # Tạo ghế Economy
-        for row in range(1, math.ceil(self.economic_class_seat_size / 6) + 1):
+        for row in range(1, math.ceil(self.economy_class_seat_size / 6) + 1):
             for col_idx, letter in enumerate(seat_letters):
-                if len(seats) - self.business_class_seat_size >= self.economic_class_seat_size:
+                if len(seats) - self.business_class_seat_size >= self.economy_class_seat_size:
                     break
                 seat_code = f"E{row}{letter}"
                 seats.append(Seat(
@@ -174,9 +174,9 @@ class FlightSchedule(BaseModel):
     dep_time = Column(DateTime, nullable=False)
     flight_time = Column(Integer, nullable=False)
     business_class_seat_size = Column(Integer, nullable=False)
-    economic_class_seat_size = Column(Integer, nullable=False)
+    economy_class_seat_size = Column(Integer, nullable=False)
     business_class_price = Column(Integer, nullable=False)
-    economic_class_price = Column(Integer, nullable=False)
+    economy_class_price = Column(Integer, nullable=False)
 
     flight_id = Column(Integer, ForeignKey(Flight.id), nullable=False, unique=True)
 
@@ -199,15 +199,15 @@ class FlightSchedule(BaseModel):
         if airplane is None:
             raise ValueError("The flight must be associated with an airplane.")  # Xử lý nếu chuyến bay không có máy bay
 
-        # Kiểm tra số lượng ghế hạng business và economic không vượt quá khả năng của máy bay
+        # Kiểm tra số lượng ghế hạng business và economy không vượt quá khả năng của máy bay
         if self.business_class_seat_size > airplane.business_class_seat_size:
             raise ValueError(
                 f"Business class seat size cannot exceed the airplane's business capacity ({airplane.business_class_seat_size})."
             )
 
-        if self.economic_class_seat_size > airplane.economic_class_seat_size:
+        if self.economy_class_seat_size > airplane.economy_class_seat_size:
             raise ValueError(
-                f"Economic class seat size cannot exceed the airplane's economic capacity ({airplane.economic_class_seat_size})."
+                f"economy class seat size cannot exceed the airplane's economy capacity ({airplane.economy_class_seat_size})."
             )
 
         policy = db.session.query(Policy).first()
@@ -226,9 +226,9 @@ class FlightSchedule(BaseModel):
                 f"Business class price cannot be less than the policy ticket price ({policy.ticket_price}). Provided: {self.business_class_price}."
             )
 
-        if self.economic_class_price < policy.ticket_price:
+        if self.economy_class_price < policy.ticket_price:
             raise ValueError(
-                f"Economic class price cannot be less than the policy ticket price ({policy.ticket_price}). Provided: {self.economic_class_price}."
+                f"economy class price cannot be less than the policy ticket price ({policy.ticket_price}). Provided: {self.economy_class_price}."
             )
 
     def create_seat_assignments(self):
@@ -249,18 +249,18 @@ class FlightSchedule(BaseModel):
             Seat.seat_class == TicketClass.Business_Class
         ).limit(self.business_class_seat_size).all()
 
-        economic_seats = db.session.query(Seat).filter(
+        economy_seats = db.session.query(Seat).filter(
             Seat.airplane_id == flight.airplane_id,
             Seat.seat_class == TicketClass.Economy_Class
-        ).limit(self.economic_class_seat_size).all()
+        ).limit(self.economy_class_seat_size).all()
 
         # Tạo SeatAssignment cho các ghế business
         for seat in business_seats:
             seat_assignment = SeatAssignment(seat_id=seat.id, flight_schedule_id=self.id, is_available=True)
             db.session.add(seat_assignment)
 
-        # Tạo SeatAssignment cho các ghế economic
-        for seat in economic_seats:
+        # Tạo SeatAssignment cho các ghế economy
+        for seat in economy_seats:
             seat_assignment = SeatAssignment(seat_id=seat.id, flight_schedule_id=self.id, is_available=True)
             db.session.add(seat_assignment)
 
@@ -415,43 +415,43 @@ if __name__ == '__main__':
                 "name": "Airbus A320",
                 "airplane_type": Airline.VietNam_Airline,
                 "business_class_seat_size": 5 * 4,  # 5 hàng * 4 ghế/hàng
-                "economic_class_seat_size": 10 * 6,  # 20 hàng * 6 ghế/hàng
+                "economy_class_seat_size": 10 * 6,  # 20 hàng * 6 ghế/hàng
             },
             {
                 "name": "Boeing 787",
                 "airplane_type": Airline.Bamboo_AirWays,
                 "business_class_seat_size": 5 * 5,
-                "economic_class_seat_size": 10 * 7,
+                "economy_class_seat_size": 10 * 7,
             },
             {
                 "name": "Airbus A321",
                 "airplane_type": Airline.Vietjet_Air,
                 "business_class_seat_size": 6 * 4,
-                "economic_class_seat_size": 14 * 6,
+                "economy_class_seat_size": 14 * 6,
             },
             {
                 "name": "Boeing 737",
                 "airplane_type": Airline.VietNam_Airline,
                 "business_class_seat_size": 4 * 4,
-                "economic_class_seat_size": 10 * 6,
+                "economy_class_seat_size": 10 * 6,
             },
             {
                 "name": "Airbus A380",
                 "airplane_type": Airline.Bamboo_AirWays,
                 "business_class_seat_size": 5 * 6,
-                "economic_class_seat_size": 8 * 8,
+                "economy_class_seat_size": 8 * 8,
             },
             {
                 "name": "Boeing 777",
                 "airplane_type": Airline.VietNam_Airline,
                 "business_class_seat_size": 5 * 5,
-                "economic_class_seat_size": 7 * 7,
+                "economy_class_seat_size": 7 * 7,
             },
             {
                 "name": "Embraer E195",
                 "airplane_type": Airline.Vietjet_Air,
                 "business_class_seat_size": 5 * 4,
-                "economic_class_seat_size": 8 * 6,
+                "economy_class_seat_size": 8 * 6,
             }
         ]
 
@@ -505,72 +505,72 @@ if __name__ == '__main__':
                 "flight_time": 120,
                 "flight_id": 1,
                 "business_class_seat_size": 15,
-                "economic_class_seat_size": 55,
-                "business_class_price": 1800000,  # Giá business cao hơn economic
-                "economic_class_price": 1500000
+                "economy_class_seat_size": 55,
+                "business_class_price": 1800000,  # Giá business cao hơn economy
+                "economy_class_price": 1500000
             },
             {
                 "dep_time": datetime.datetime(2024, 12, 10, 10, 0),
                 "flight_time": 90,
                 "flight_id": 2,
                 "business_class_seat_size": 25,
-                "economic_class_seat_size": 60,
-                "business_class_price": 3300000,  # Giá business cao hơn economic
-                "economic_class_price": 3000000
+                "economy_class_seat_size": 60,
+                "business_class_price": 3300000,  # Giá business cao hơn economy
+                "economy_class_price": 3000000
             },
             {
                 "dep_time": datetime.datetime(2024, 12, 10, 12, 0),
                 "flight_time": 80,
                 "flight_id": 3,
                 "business_class_seat_size": 20,
-                "economic_class_seat_size": 70,
-                "business_class_price": 1800000,  # Giá business cao hơn economic
-                "economic_class_price": 1500000
+                "economy_class_seat_size": 70,
+                "business_class_price": 1800000,  # Giá business cao hơn economy
+                "economy_class_price": 1500000
             },
             {
                 "dep_time": datetime.datetime(2024, 12, 10, 15, 0),
                 "flight_time": 100,
                 "flight_id": 4,
                 "business_class_seat_size": 15,
-                "economic_class_seat_size": 50,
-                "business_class_price": 2200000,  # Giá business cao hơn economic
-                "economic_class_price": 2000000
+                "economy_class_seat_size": 50,
+                "business_class_price": 2200000,  # Giá business cao hơn economy
+                "economy_class_price": 2000000
             },
             {
                 "dep_time": datetime.datetime(2024, 12, 11, 8, 0),
                 "flight_time": 130,
                 "flight_id": 5,
                 "business_class_seat_size": 30,
-                "economic_class_seat_size": 60,
-                "business_class_price": 6000000,  # Giá business cao hơn economic
-                "economic_class_price": 5500000
+                "economy_class_seat_size": 60,
+                "business_class_price": 6000000,  # Giá business cao hơn economy
+                "economy_class_price": 5500000
             },
             {
                 "dep_time": datetime.datetime(2024, 12, 10, 14, 0),
                 "flight_time": 95,
                 "flight_id": 6,
                 "business_class_seat_size": 20,
-                "economic_class_seat_size": 45,
-                "business_class_price": 1800000,  # Giá business cao hơn economic
-                "economic_class_price": 1500000
+                "economy_class_seat_size": 45,
+                "business_class_price": 1800000,  # Giá business cao hơn economy
+                "economy_class_price": 1500000
             },
             {
                 "dep_time": datetime.datetime(2024, 12, 10, 10, 30),
                 "flight_time": 115,
                 "flight_id": 7,
                 "business_class_seat_size": 15,
-                "economic_class_seat_size": 45,
-                "business_class_price": 1800000,  # Giá business cao hơn economic
-                "economic_class_price": 1500000
+                "economy_class_seat_size": 45,
+                "business_class_price": 1800000,  # Giá business cao hơn economy
+                "economy_class_price": 1500000
             },
             {
                 "dep_time": datetime.datetime(2024, 12, 12, 17, 0),
                 "flight_time": 120,
                 "flight_id": 8,
                 "business_class_seat_size": 10,
-                "economic_class_seat_size": 55,
-                "business_class_price": 1800000,  # Giá business cao hơn economic
-                "economic_class_price": 1500000
+                "economy_class_seat_size": 55,
+                "business_class_price": 1800000,  # Giá business cao hơn economy
+                "economy_class_price": 1500000
             }
         ]
 

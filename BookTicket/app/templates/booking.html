@@ -2,79 +2,87 @@
 {% block content %}
 <h1 class="text-center text-primary mt-4">THÔNG TIN HÀNH KHÁCH VÀ THANH TOÁN</h1>
 
-<!-- Thông tin liên hệ -->
-<h4 class="mt-4">Thông tin liên hệ</h4>
-<form action="/booking" method="POST">
-    <div class="row border p-3 mb-4">
-        <div class="col-md-6 mb-3">
-            <label for="contact_name">Họ và tên</label>
-            <input type="text" class="form-control" id="contact_name" placeholder="Nhập họ và tên" name="contact_name" required>
-        </div>
-        <div class="col-md-6 mb-3">
-            <label for="contact_id">CMND/CCCD</label>
-            <input type="text" class="form-control" id="contact_id" placeholder="Nhập CMND/CCCD" name="contact_id" required>
-        </div>
-        <div class="col-md-6 mb-3">
-            <label for="contact_phone">Số Điện Thoại</label>
-            <input type="text" class="form-control" id="contact_phone" placeholder="Nhập số điện thoại" name="contact_phone" required>
-        </div>
-        <div class="col-md-6 mb-3">
-            <label for="contact_email">Email</label>
-            <input type="email" class="form-control" id="contact_email" placeholder="Nhập email" name="contact_email" required>
-        </div>
-    </div>
+<form action="/add_customer" method="POST">
+    <input type="hidden" name="passenger_count" value="{{ passenger }}">
 
     <!-- Chi tiết hành khách -->
-    <h4 class="mt-4">Chi tiết hành khách</h4>
+    {% for p in range(passenger) %}
+    <h4 class="mt-4">Chi tiết hành khách {{ p + 1 }}</h4>
     <div class="row border p-3 mb-4">
         <div class="col-md-6 mb-3">
             <label for="passenger_name">Họ và tên</label>
-            <input type="text" class="form-control" id="passenger_name" placeholder="Nhập họ và tên" name="passenger_name" required>
+            <input type="text" class="form-control" id="passenger_name" name="passenger_name_{{ p }}" required>
         </div>
         <div class="col-md-6 mb-3">
             <label for="passenger_id">CMND/CCCD</label>
-            <input type="text" class="form-control" id="passenger_id" placeholder="Nhập CMND/CCCD" name="passenger_id" required>
+            <input type="text" class="form-control" id="passenger_id" name="passenger_id_{{ p }}" required>
         </div>
         <div class="col-md-6 mb-3">
             <label for="passenger_birth">Ngày sinh</label>
-            <input type="date" class="form-control" id="passenger_birth" name="passenger_birth" required>
+            <input type="date" class="form-control" id="passenger_birth" name="passenger_birth_{{ p }}" required>
         </div>
         <div class="col-md-6 mb-3">
-            <label for="passenger_nation">Quốc tịch</label>
-            <input type="text" class="form-control" id="passenger_nation" placeholder="Nhập quốc tịch" name="passenger_nation" required>
+            <label for="passenger_gender">Giới tính</label>
+            <select class="form-control" id="passenger_gender" name="passenger_gender_{{ p }}" required>
+                <option value="Male">Nam</option>
+                <option value="Female">Nữ</option>
+            </select>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Tóm tắt chuyến bay -->
+    <h4 class="mt-4 text-danger fw-bold">Tóm tắt chuyến bay</h4>
+    <div class="row justify-content-center align-items-center border rounded p-4 mb-4 bg-light "
+         style="min-height: 200px;">
+        <div class="col-md-6 text-center">
+            <div class="d-flex justify-content-center align-items-center fs-4">
+                <span class="fw-bold text-uppercase text-primary">{{ departure }}</span>
+                <span class="mx-3 text-secondary">&rarr;</span>
+                <span class="fw-bold text-uppercase text-primary">{{ destination }}</span>
+            </div>
+            <div class="mt-3 fs-5">
+                <p class="mb-0 text-muted">
+                    <i class="fa fa-calendar"></i>{{ departure_date }}
+                </p>
+                <p class="mb-0 text-muted">
+                    <i class="fa fa-clock"></i> {{ departure_time }} - {{arrival_time}}
+                </p>
+                <p class="mb-0 text-secondary">
+                    Bay thẳng | Thời gian: <strong>{{ flight_time }}</strong>
+                </p>
+            </div>
         </div>
     </div>
 
-    <!-- Tóm tắt chuyến bay -->
-    <h4 class="mt-4">Tóm tắt chuyến bay</h4>
-    <div class="row border p-3 mb-4">
-        <div class="col-md-6">
-            <strong>Chuyến bay đi</strong><br>
-            <span>TP. HCM</span>
-            <span class="ml-2 mr-2">&rarr;</span>
-            <span>Hà Nội</span><br>
-            <span>Thứ 3, 10/10/2002 | 09:30 - 12:30</span> <br>
-            <span class="text-muted">Bay thẳng | 3h 0m</span>
-        </div>
-        <div class="col-md-6">
-            <strong>Chuyến bay về</strong><br>
-            <span>Hà Nội</span>
-            <span class="ml-2 mr-2">&rarr;</span>
-            <span>TP. HCM</span><br>
-            <span>Thứ 6, 13/10/2002 | 12:30 - 15:30</span> <br>
-            <span class="text-muted">Bay thẳng | 3h 0m</span>
-        </div>
-    </div>
 
     <!-- Chi tiết giá -->
     <h4 class="mt-4">Chi tiết giá</h4>
     <div class="border p-3 mb-4">
         <div class="row">
             <div class="col-md-8">
-                <strong>Người lớn (1 khách)</strong>
+                <strong>Đơn giá vé</strong>
             </div>
             <div class="col-md-4 text-right">
-                <span>2.320.000 VND</span>
+                <span>{{ price }} VND</span>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-8">
+                <strong>Hạng vé</strong>
+            </div>
+            <div class="col-md-4 text-right">
+                <span>{{ ticket_class }}</span>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-8">
+                <strong>Số hành khách</strong>
+            </div>
+            <div class="col-md-4 text-right">
+                <span>{{ passenger }}</span>
             </div>
         </div>
         <hr>
@@ -83,14 +91,14 @@
                 <h5><strong>Tổng cộng</strong></h5>
             </div>
             <div class="col-md-4 text-right">
-                <h5><strong>2.320.000 VND</strong></h5>
+                <h5><strong>{{ total }} VND</strong></h5>
             </div>
         </div>
     </div>
 
     <!-- Nút thanh toán -->
     <div class="text-center mt-4">
-        <button type="submit" class="btn btn-danger btn-lg">Thanh toán</button>
+        <button type="submit" class="btn btn-danger btn-lg">Mua Vé</button>
     </div>
 </form>
 {% endblock %}
