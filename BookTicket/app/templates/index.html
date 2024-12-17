@@ -26,6 +26,7 @@
             <div class="col-md-6">
                 <label for="departure" class="form-label">Từ</label>
                 <select class="form-select" id="departure" name="departure">
+                    <option value="" disabled selected>Chọn nơi đi</option>
                     {% for p in provinces %}
                     <option value="{{ p.name }}">{{ p.name }}</option>
                     {% endfor %}
@@ -36,6 +37,7 @@
             <div class="col-md-6">
                 <label for="destination" class="form-label">Đến</label>
                 <select class="form-select" id="destination" name="destination">
+                    <option value="" disabled selected>Chọn nơi đến</option>
                     {% for p in provinces %}
                     <option value="{{ p.name }}">{{ p.name }}</option>
                     {% endfor %}

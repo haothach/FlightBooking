@@ -1,84 +1,67 @@
-    document.addEventListener('DOMContentLoaded', function() {
-       const oneWayRadio = document.getElementById('one-way');
-       const roundTripRadio = document.getElementById('round-trip');
-       const returnDateGroup = document.getElementById('return');
+document.addEventListener("DOMContentLoaded", function () {
+    // Logic cho "Điểm đi" và "Điểm đến"
+    const departureSelect = document.getElementById('departure');
+    const destinationSelect = document.getElementById('destination');
 
-       toggleReturnDate();
+    if (departureSelect && destinationSelect) {
+        function updateOptions() {
+            const departureValue = departureSelect.value;
+            const destinationValue = destinationSelect.value;
 
+            // Hiện tất cả các tùy chọn trước khi áp dụng ẩn
+            for (let option of departureSelect.options) {
+                option.style.display = 'block';
+            }
+            for (let option of destinationSelect.options) {
+                option.style.display = 'block';
+            }
 
-       oneWayRadio.addEventListener('change', toggleReturnDate);
-       roundTripRadio.addEventListener('change', toggleReturnDate);
+            // Ẩn lựa chọn "Điểm đến" ở "Điểm đi" và ngược lại
+            if (departureValue) {
+                for (let option of destinationSelect.options) {
+                    if (option.value === departureValue) {
+                        option.style.display = 'none';
+                    }
+                }
+            }
 
-       function toggleReturnDate() {
-           if (oneWayRadio.checked) {
-               returnDateGroup.style.display = 'none';
-           } else {
-               returnDateGroup.style.display = 'block';
-           }
-       }
-   });
+            if (destinationValue) {
+                for (let option of departureSelect.options) {
+                    if (option.value === destinationValue) {
+                        option.style.display = 'none';
+                    }
+                }
+            }
+        }
 
-   const departureSelect = document.getElementById('departure');
-   const destinationSelect = document.getElementById('destination');
+        departureSelect.addEventListener('change', updateOptions);
+        destinationSelect.addEventListener('change', updateOptions);
+        updateOptions();
+    }
 
-   function updateOptions() {
-       const departureValue = departureSelect.value;
-       const destinationValue = destinationSelect.value;
+    // Logic đặt ngày mặc định
+    const departureDateInput = document.getElementById('departure_date');
+    if (departureDateInput) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
 
-       // Hiện tất cả các tùy chọn trước khi áp dụng ẩn
-       for (let option of departureSelect.options) {
-           option.style.display = 'block';
-       }
-       for (let option of destinationSelect.options) {
-           option.style.display = 'block';
-       }
+        departureDateInput.value = `${yyyy}-${mm}-${dd}`;
+    }
 
-       // Ẩn lựa chọn "Điểm đến" ở "Điểm đi" và ngược lại
-       if (departureValue) {
-           for (let option of destinationSelect.options) {
-               if (option.value === departureValue) {
-                   option.style.display = 'none';
-               }
-           }
-       }
-
-       if (destinationValue) {
-           for (let option of departureSelect.options) {
-               if (option.value === destinationValue) {
-                   option.style.display = 'none';
-               }
-           }
-       }
-   }
-
-   departureSelect.addEventListener('change', updateOptions);
-   destinationSelect.addEventListener('change', updateOptions);
-
-   document.addEventListener('DOMContentLoaded', updateOptions);
-
-    const departureDateInput = document.getElementById('departure-date');
-
-    // Tạo ngày hiện tại theo định dạng YYYY-MM-DD
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0'); // tháng bắt đầu từ 0 nên phải +1
-    const dd = String(today.getDate()).padStart(2, '0');
-
-    // Đặt giá trị mặc định cho input là ngày hiện tại
-    departureDateInput.value = `${yyyy}-${mm}-${dd}`;
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const alerts = document.querySelectorAll('.alert');
-
-        // Hiệu ứng xuất hiện
+    // Logic hiệu ứng thông báo
+    const alerts = document.querySelectorAll('.alert');
+    if (alerts.length > 0) {
         alerts.forEach(alert => {
-            alert.classList.add('fade-in'); // Thêm hiệu ứng xuất hiện
+            alert.classList.add('fade-in');
 
             // Tự động ẩn sau 3 giây
             setTimeout(() => {
-                alert.classList.remove('fade-in'); // Loại bỏ hiệu ứng xuất hiện
-                alert.classList.add('fade-out');  // Thêm hiệu ứng biến mất
-                setTimeout(() => alert.remove(), 500); // Xóa khỏi DOM sau khi hiệu ứng kết thúc
-            }, 3000); // 3000ms = 3 giây
+                alert.classList.remove('fade-in');
+                alert.classList.add('fade-out');
+                setTimeout(() => alert.remove(), 500);
+            }, 3000);
         });
-    });
+    }
+});

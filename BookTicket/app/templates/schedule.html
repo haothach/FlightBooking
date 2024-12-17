@@ -23,6 +23,7 @@
         <div class="col-md-6">
             <label for="dep_airport" class="form-label font-weight-bold">Sân bay đi</label>
             <select class="form-select" id="dep_airport" name="dep_airport">
+                <option value="" disabled selected>Chọn sân bay</option>
                 {% for a in airports %}
                 <option value="{{ a.id }}">{{a.name}}</option>
                 {% endfor %}
@@ -32,6 +33,7 @@
         <div class="col-md-6">
             <label for="des_airport" class="form-label font-weight-bold">Sân bay đến</label>
             <select class="form-select" id="des_airport" name="des_airport">
+                <option value="" disabled selected>Chọn sân bay</option>
                 {% for a in airports %}
                 <option value="{{ a.id }}">{{a.name}}</option>
                 {% endfor %}
@@ -150,6 +152,7 @@
             <td>
                 <div class="col-md-12">
                     <select class="form-select" id="imediateairport1" name="imediateairport1">
+                        <option value="" disabled selected>Chọn sân bay</option>
                         {% for a in airports %}
                         <option value="{{ a.id }}">{{a.name}}</option>
                         {% endfor %}
@@ -189,6 +192,7 @@
             <td>
                 <div class="col-md-12">
                     <select class="form-select" id="imediateairport2" name="imediateairport2">
+                        <option value="" disabled selected>Chọn sân bay</option>
                         {% for a in airports %}
                         <option value="{{ a.id }}">{{a.name}}</option>
                         {% endfor %}
@@ -231,4 +235,67 @@
         <button type="submit" class="btn btn-danger btn-lg">Xác nhận lập lịch</button>
     </div>
 </form>
+<script>
+        // Hiện sân bay trung gian
+    function toggleTransitFields() {
+    const checkbox = document.getElementById('enableTransit');
+    const transitTable = document.getElementById('transitTable');
+
+    // Kiểm tra trạng thái của checkbox
+    if (checkbox.checked) {
+        transitTable.style.display = 'table'; // Hiển thị bảng
+    } else {
+        transitTable.style.display = 'none'; // Ẩn bảng
+    }
+}
+
+    // Xử lí không thể chọn trùng lập sân bay
+document.addEventListener("DOMContentLoaded", function () {
+    // Lấy các phần tử input
+    const depAirport = document.getElementById("dep_airport");
+    const desAirport = document.getElementById("des_airport");
+    const immediateAirport1 = document.getElementById("imediateairport1");
+    const immediateAirport2 = document.getElementById("imediateairport2");
+
+    if (depAirport && desAirport && immediateAirport1 && immediateAirport2) {
+        function updateOptions() {
+            const depValue = depAirport.value;
+            const desValue = desAirport.value;
+            const immediateValue1 = immediateAirport1.value;
+            const immediateValue2 = immediateAirport2.value;
+
+            // Hiện tất cả các tùy chọn trước khi áp dụng ẩn
+            [depAirport, desAirport, immediateAirport1, immediateAirport2].forEach(dropdown => {
+                for (let option of dropdown.options) {
+                    option.style.display = 'block';
+                }
+            });
+
+            // Ẩn các tùy chọn trùng với giá trị đã chọn ở các dropdown khác
+            [depAirport, desAirport, immediateAirport1, immediateAirport2].forEach(dropdown => {
+                for (let option of dropdown.options) {
+                    if (
+                        (dropdown !== depAirport && option.value === depValue) ||
+                        (dropdown !== desAirport && option.value === desValue) ||
+                        (dropdown !== immediateAirport1 && option.value === immediateValue1) ||
+                        (dropdown !== immediateAirport2 && option.value === immediateValue2)
+                    ) {
+                        option.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        // Thêm sự kiện thay đổi cho từng dropdown
+        [depAirport, desAirport, immediateAirport1, immediateAirport2].forEach(dropdown => {
+            dropdown.addEventListener("change", updateOptions);
+        });
+
+        // Gọi hàm cập nhật ngay khi trang tải xong
+        updateOptions();
+    }
+});
+
+
+</script>
 {% endblock %}

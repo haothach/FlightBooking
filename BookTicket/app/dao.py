@@ -59,8 +59,25 @@ def load_flights(departure, destination, departure_date):
     )
     cursor = conn.cursor()
     query = """
+        WITH RankedAirports AS (
+            SELECT 
+                f.flight_code,
+                ia.airport_id,
+                a.name AS airport_name,
+                ia.stop_time,
+                ROW_NUMBER() OVER (PARTITION BY f.flight_code ORDER BY ia.stop_time) AS rn
+            FROM 
+                flight f
+            LEFT JOIN 
+                intermediate_airport ia ON f.id = ia.flight_id
+            LEFT JOIN 
+                airport a ON ia.airport_id = a.id
+            WHERE 
+                ia.stop_time IS NOT NULL
+        )
         SELECT 
-            f.flight_code,  -- Mã chuyến bay
+            f.flight_code,  -- Mã chuyến bay,
+            f.id,
             fs.business_class_price AS business_price,  -- Giá vé hạng 1
             fs.economy_class_price AS economy_price,  -- Giá vé hạng 2
             dep_airport.name AS departure_airport,  -- Sân bay đi
@@ -72,22 +89,34 @@ def load_flights(departure, destination, departure_date):
                     CONCAT(fs.flight_time, ' phút')
                 ELSE 
                     CONCAT(
-                        FLOOR(fs.flight_time / 60), ' giờ ',
+                        FLOOR(fs.flight_time / 60), ' giờ ', 
                         LPAD(MOD(fs.flight_time, 60), 2, '0'), ' phút'
                     )
             END AS flight_time,
             ap.name AS airplane_name,  -- Tên máy bay
             ap.airplane_type AS airline_name,  -- Tên hãng hàng không
-            a.name AS intermediate_airport,  -- Tên sân bay trung gian
+            MAX(CASE WHEN rn = 1 THEN airport_name END) AS intermediate_airport_1,  -- Tên sân bay trung gian 1
+            MAX(CASE WHEN rn = 2 THEN airport_name END) AS intermediate_airport_2,  -- Tên sân bay trung gian 2
+            MAX(CASE WHEN rn = 1 THEN stop_time END) AS ia_stop_time_1,
+            MAX(CASE WHEN rn = 2 THEN stop_time END) AS ia_stop_time_2,
             CASE 
-                WHEN ia.stop_time < 60 THEN 
-                    CONCAT(ia.stop_time, ' phút')
+                WHEN MAX(CASE WHEN rn = 1 THEN stop_time END) < 60 THEN 
+                    CONCAT(MAX(CASE WHEN rn = 1 THEN stop_time END), ' phút')
                 ELSE 
                     CONCAT(
-                        FLOOR(ia.stop_time / 60), ' giờ ',
-                        LPAD(MOD(ia.stop_time, 60), 2, '0'), ' phút'
+                        FLOOR(MAX(CASE WHEN rn = 1 THEN stop_time END) / 60), ' giờ ', 
+                        LPAD(MOD(MAX(CASE WHEN rn = 1 THEN stop_time END), 60), 2, '0'), ' phút'
                     )
-            END AS stop_time,
+            END AS stop_time_1,
+            CASE 
+                WHEN MAX(CASE WHEN rn = 2 THEN stop_time END) < 60 THEN 
+                    CONCAT(MAX(CASE WHEN rn = 2 THEN stop_time END), ' phút')
+                ELSE 
+                    CONCAT(
+                        FLOOR(MAX(CASE WHEN rn = 2 THEN stop_time END) / 60), ' giờ ', 
+                        LPAD(MOD(MAX(CASE WHEN rn = 2 THEN stop_time END), 60), 2, '0'), ' phút'
+                    )
+            END AS stop_time_2,
             (SELECT COUNT(*) 
              FROM seat_assignment sa
              JOIN seat s ON sa.seat_id = s.id
@@ -109,14 +138,10 @@ def load_flights(departure, destination, departure_date):
         JOIN 
             airplane ap ON f.airplane_id = ap.id
         LEFT JOIN 
-            intermediate_airport ia ON f.id = ia.flight_id
+            RankedAirports ra ON f.flight_code = ra.flight_code
         LEFT JOIN 
-            airport a ON ia.airport_id = a.id
-        LEFT JOIN 
-            seat_assignment sa ON sa.flight_schedule_id = fs.id
-        JOIN 
             province dep_province ON dep_airport.province_id = dep_province.id
-        JOIN 
+        LEFT JOIN 
             province des_province ON des_airport.province_id = des_province.id
         WHERE 
             dep_province.name = %s  -- Tên tỉnh sân bay đi
@@ -124,8 +149,8 @@ def load_flights(departure, destination, departure_date):
             AND DATE(fs.dep_time) = %s  -- Ngày khởi hành
         GROUP BY 
             f.flight_code, fs.business_class_price, fs.economy_class_price, dep_airport.name, des_airport.name, 
-            fs.dep_time, fs.flight_time, a.name, ap.name, ia.airport_id, ia.stop_time, fs.business_class_seat_size, 
-            fs.economy_class_seat_size;
+            fs.dep_time, fs.flight_time, ap.name, fs.business_class_seat_size, fs.economy_class_seat_size;
+
 
     """
     # Thực thi truy vấn
@@ -151,6 +176,7 @@ def load_flights(departure, destination, departure_date):
             "stop_time": row[11],  # Thời gian dừng
             "remaining_business_seats": row[12],  # Số ghế hạng 1 còn lại
             "remaining_economy_seats": row[13],  # Số ghế hạng 2 còn lại
+            "flight_id":row[14]
         }
         for row in results
     ]
