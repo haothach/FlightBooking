@@ -1,10 +1,11 @@
 
-from app.models import User, Province, Airport, Flight, FlightRoute,FlightSchedule,Ticket
+from app.models import User, Province, Airport, Flight, FlightRoute,FlightSchedule,Ticket, Seat, SeatAssignment
 from app import app, db
 import hashlib
 import cloudinary.uploader
 import sqlite3, pymysql
 import datetime
+from sqlalchemy.orm import joinedload
 
 
 def load_province():
@@ -159,3 +160,11 @@ def load_flights(departure, destination, departure_date):
     ]
 
     return flights
+
+def get_available_seats(flight_id, seat_class):
+    return db.session.query(Seat).join(SeatAssignment).join(FlightSchedule) \
+        .filter(
+            FlightSchedule.flight_id == flight_id,
+            SeatAssignment.is_available == True,
+            Seat.seat_class == seat_class
+        ).options(joinedload(Seat.seat_assignments)).all()

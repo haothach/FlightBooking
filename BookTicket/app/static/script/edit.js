@@ -51,17 +51,18 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Logic hiệu ứng thông báo
-    const alerts = document.querySelectorAll('.alert');
-    if (alerts.length > 0) {
-        alerts.forEach(alert => {
-            alert.classList.add('fade-in');
+//    const alerts = document.querySelectorAll('.alert');
+//    if (alerts.length > 0) {
+//        alerts.forEach(alert => {
+//            alert.classList.add('fade-in');
+//
+//            // Tự động ẩn sau 3 giây
+//            setTimeout(() => {
+//                alert.classList.remove('fade-in');
+//                alert.classList.add('fade-out');
+//                setTimeout(() => alert.remove(), 500);
+//            }, 3000);
+//        });
+//    }
 
-            // Tự động ẩn sau 3 giây
-            setTimeout(() => {
-                alert.classList.remove('fade-in');
-                alert.classList.add('fade-out');
-                setTimeout(() => alert.remove(), 500);
-            }, 3000);
-        });
-    }
 });

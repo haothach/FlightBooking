@@ -2,6 +2,13 @@
 {% block content %}
 <h1 class="text-center text-primary mt-4">THÔNG TIN HÀNH KHÁCH VÀ THANH TOÁN</h1>
 
+{% if not current_user.is_authenticated %}
+<div class="alert alert-danger text-center fs-4" role="alert">
+    <a href="{{ url_for('login_view') }}" class="alert-link">BẠN CẦN ĐĂNG NHẬP ĐỂ MUA VÉ</a>
+</div>
+
+
+{% endif %}
 <form action="/add_customer" method="POST">
     <input type="hidden" name="passenger_count" value="{{ passenger }}">
 
@@ -26,6 +33,15 @@
             <select class="form-control" id="passenger_gender" name="passenger_gender_{{ p }}" required>
                 <option value="Male">Nam</option>
                 <option value="Female">Nữ</option>
+            </select>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="seat" class="form-label">Ghế khả dụng</label>
+            <select class="form-select" id="seat" name="seat">
+                <option>Chọn ghế</option>
+                {% for seat in available_seats %}
+                <option value="{{ seat.id }}">{{ seat.seat_code }}</option>
+                {% endfor %}
             </select>
         </div>
     </div>
@@ -97,8 +113,15 @@
     </div>
 
     <!-- Nút thanh toán -->
+
+    {% if current_user.is_authenticated %}
     <div class="text-center mt-4">
-        <button type="submit" class="btn btn-danger btn-lg">Mua Vé</button>
+         <div class="text-center mt-4">
+            <button type="submit" class="btn btn-danger btn-lg">Mua Vé</button>
+        </div>
     </div>
+    {% endif %}
+
+
 </form>
 {% endblock %}

@@ -10,6 +10,7 @@ app = Flask(__name__)
 app.secret_key = 'thachnhsdfasdfgqw'
 app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:%s@localhost/flight?charset=utf8mb4" % quote("123456")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
+app.config["NUMBER_ROWS"] = 6
 
 db = SQLAlchemy(app)
 

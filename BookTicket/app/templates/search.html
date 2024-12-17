@@ -141,6 +141,7 @@
                                 VNĐ</p>
                             <p class="text-muted">Còn lại: {{ f.remaining_economy_seats }} ghế</p>
                             <input type="hidden" name="passenger" value="{{ request.args.get('passenger') }}">
+                            <input type="hidden" name="flight_id" value="{{ f.flight_id }}">
                             <input type="hidden" name="departure" value="{{ departure }}">
                             <input type="hidden" name="destination" value="{{ destination }}">
                             <input type="hidden" name="class" value="economy">
@@ -160,6 +161,7 @@
                                 VNĐ</p>
                             <p class="text-muted">Còn lại: {{ f.remaining_business_seats }} ghế</p>
                             <input type="hidden" name="passenger" value="{{ request.args.get('passenger') }}">
+                            <input type="hidden" name="flight_id" value="{{ f.flight_id }}">
                             <input type="hidden" name="departure" value="{{ departure }}">
                             <input type="hidden" name="destination" value="{{ destination }}">
                             <input type="hidden" name="class" value="business">

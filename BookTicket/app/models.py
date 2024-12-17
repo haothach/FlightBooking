@@ -129,7 +129,7 @@ class Airplane(BaseModel):
         seat_letters = ['A', 'B', 'C', 'D', 'E', 'F']  # Các cột từ A đến F
 
         # Tạo ghế Business
-        for row in range(1, math.ceil(self.business_class_seat_size / 6) + 1):
+        for row in range(1, math.ceil(self.business_class_seat_size / app.config["NUMBER_ROWS"]) + 1):
             for col_idx, letter in enumerate(seat_letters):
                 if len(seats) >= self.business_class_seat_size:  # Dừng nếu đủ số ghế
                     break
