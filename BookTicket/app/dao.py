@@ -1,10 +1,14 @@
+import datetime
 
-from app.models import User, Province, Airport, Flight, FlightRoute,FlightSchedule,Ticket
+from app.models import User, Province, Airport, Flight, FlightRoute, FlightSchedule, TicketClass, Seat, SeatAssignment, \
+    Airplane, IntermediateAirport
 from app import app, db
 import hashlib
 import cloudinary.uploader
 import sqlite3, pymysql
-import datetime
+from datetime import timedelta, datetime
+from sqlalchemy.orm import joinedload, aliased
+from sqlalchemy import func, text, and_
 
 
 def load_province():
@@ -38,7 +42,7 @@ def auth_user(username, password, role=None):
     password = str(hashlib.md5(password.encode('utf-8')).hexdigest())
 
     u = User.query.filter(User.username.__eq__(username),
-                             User.password.__eq__(password))
+                          User.password.__eq__(password))
 
     if role:
         u = u.filter(User.user_role.__eq__(role))
@@ -51,103 +55,118 @@ def get_user_by_id(id):
 
 
 # function connect to database
+from sqlalchemy import func, case, text
+from sqlalchemy.orm import aliased
+
+
 def load_flights(departure, destination, departure_date):
-    conn = pymysql.connect(
-        host='localhost',  # Địa chỉ máy chủ (thường là localhost)
-        user='root',  # Tên người dùng MySQL
-        password='123456',  # Mật khẩu người dùng
-        database='flight',  # Tên cơ sở dữ liệu
+    # Khai báo các alias cho các bảng
+    departure_airport = aliased(Airport)
+    destination_airport = aliased(Airport)
+    departure_province = aliased(Province)
+    destination_province = aliased(Province)
+
+    # Subquery để lấy thông tin các sân bay trung gian
+    ranked_airports = aliased(
+        db.session.query(
+            IntermediateAirport.flight_id.label('flight_id'),
+            Airport.name.label('airport_name'),
+            IntermediateAirport.stop_time.label('stop_time'),
+            func.row_number().over(
+                partition_by=IntermediateAirport.flight_id,
+                order_by=IntermediateAirport.stop_time
+            ).label('rn')
+        ).join(Airport, IntermediateAirport.airport_id == Airport.id)
+        .filter(IntermediateAirport.stop_time.isnot(None))
+        .subquery()
     )
-    cursor = conn.cursor()
-    query = """
-        WITH RankedAirports AS (
-            SELECT 
-                f.flight_code,
-                ia.airport_id,
-                a.name AS airport_name,
-                ia.stop_time,
-                ROW_NUMBER() OVER (PARTITION BY f.flight_code ORDER BY ia.stop_time) AS rn
-            FROM 
-                flight f
-            LEFT JOIN 
-                intermediate_airport ia ON f.id = ia.flight_id
-            LEFT JOIN 
-                airport a ON ia.airport_id = a.id
-            WHERE 
-                ia.stop_time IS NOT NULL
-        )
-        SELECT 
-            f.flight_code,  -- Mã chuyến bay,
-            fs.business_class_price AS business_price,  -- Giá vé hạng 1
-            fs.economy_class_price AS economy_price,  -- Giá vé hạng 2
-            dep_airport.name AS departure_airport,  -- Sân bay đi
-            des_airport.name AS destination_airport,  -- Sân bay đến
-            fs.dep_time AS departure_time,  -- Giờ khởi hành
-            DATE_ADD(fs.dep_time, INTERVAL fs.flight_time MINUTE) AS arrival_time,  -- Giờ đến (tính từ giờ khởi hành + thời gian bay)
-            CASE 
-                WHEN fs.flight_time < 60 THEN 
-                    CONCAT(fs.flight_time, ' phút')
-                ELSE 
-                    CONCAT(
-                        FLOOR(fs.flight_time / 60), ' giờ ',
-                        LPAD(MOD(fs.flight_time, 60), 2, '0'), ' phút'
-                    )
-            END AS flight_time,
-            ap.name AS airplane_name,  -- Tên máy bay
-            ap.airplane_type AS airline_name,  -- Tên hãng hàng không
-            (SELECT COUNT(*) 
-             FROM seat_assignment sa
-             JOIN seat s ON sa.seat_id = s.id
-             WHERE sa.flight_schedule_id = fs.id AND sa.is_available = 1 AND s.seat_class = 1) AS remaining_business_seats,  -- Số ghế hạng 1 còn lại
-            (SELECT COUNT(*) 
-             FROM seat_assignment sa
-             JOIN seat s ON sa.seat_id = s.id
-             WHERE sa.flight_schedule_id = fs.id AND sa.is_available = 1 AND s.seat_class = 2) AS remaining_economy_seats,
-            f.id,
-            MAX(CASE WHEN rn = 1 THEN ra.airport_name END) AS intermediate_airport_1,  -- Tên sân bay trung gian 1
-            MAX(CASE WHEN rn = 2 THEN ra.airport_name END) AS intermediate_airport_2,  -- Tên sân bay trung gian 2
-            MAX(CASE WHEN rn = 1 THEN ra.stop_time END) AS ia_stop_time_1,  -- Thời gian dừng trung gian 1
-            MAX(CASE WHEN rn = 2 THEN ra.stop_time END) AS ia_stop_time_2   -- Thời gian dừng trung gian 2
-  
-        FROM 
-            flight_schedule fs
-        JOIN 
-            flight f ON fs.flight_id = f.id
-        JOIN 
-            flight_route fr ON f.flight_route_id = fr.id
-        JOIN 
-            airport dep_airport ON fr.dep_airport_id = dep_airport.id
-        JOIN 
-            airport des_airport ON fr.des_airport_id = des_airport.id
-        JOIN 
-            airplane ap ON f.airplane_id = ap.id
-        LEFT JOIN 
-            intermediate_airport ia ON f.id = ia.flight_id
-        LEFT JOIN 
-            airport a ON ia.airport_id = a.id
-        LEFT JOIN 
-            RankedAirports ra ON f.flight_code = ra.flight_code
-        LEFT JOIN 
-            seat_assignment sa ON sa.flight_schedule_id = fs.id
-        JOIN 
-            province dep_province ON dep_airport.province_id = dep_province.id
-        JOIN 
-            province des_province ON des_airport.province_id = des_province.id
-        WHERE 
-            dep_province.name = %s  -- Tên tỉnh sân bay đi
-            AND des_province.name = %s  -- Tên tỉnh sân bay đến
-            AND DATE(fs.dep_time) = %s  -- Ngày khởi hành
-        GROUP BY 
-            f.flight_code, fs.business_class_price, fs.economy_class_price, dep_airport.name, des_airport.name, 
-            fs.dep_time, fs.flight_time, ap.name, ap.airplane_type, f.id;
 
+    # Truy vấn chính
+    query = db.session.query(
+        Flight.flight_code.label('flight_code'),
+        FlightSchedule.business_class_price.label('business_price'),
+        FlightSchedule.economy_class_price.label('economy_price'),
+        departure_airport.name.label('departure_airport'),
+        destination_airport.name.label('destination_airport'),
+        FlightSchedule.dep_time.label('departure_time'),
+        func.date_add(
+            FlightSchedule.dep_time,
+            text("INTERVAL flight_schedule.flight_time MINUTE")
+        ).label('arrival_time'),
+        FlightSchedule.flight_time.label('flight_time'),
+        Airplane.name.label('airplane_name'),
+        Airplane.airplane_type.label('airline_name'),
+        db.session.query(func.count())
+        .filter(
+            SeatAssignment.flight_schedule_id == FlightSchedule.id,
+            SeatAssignment.is_available == True,
+            Seat.seat_class == TicketClass.Business_Class,
+            SeatAssignment.seat_id == Seat.id
+        ).scalar_subquery().label('remaining_business_seats'),
+        db.session.query(func.count())
+        .filter(
+            SeatAssignment.flight_schedule_id == FlightSchedule.id,
+            SeatAssignment.is_available == True,
+            Seat.seat_class == TicketClass.Economy_Class,
+            SeatAssignment.seat_id == Seat.id
+        ).scalar_subquery().label('remaining_economy_seats'),
+        Flight.id.label('flight_id'),
+        # Intermediate airports
+        func.max(
+            case(
+                (ranked_airports.c.rn == 1, ranked_airports.c.airport_name)
+            )
+        ).label('intermediate_airport_1'),
+        func.max(
+            case(
+                (ranked_airports.c.rn == 1, ranked_airports.c.stop_time)
+            )
+        ).label('ia_stop_time_1'),
+        func.max(
+            case(
+                (ranked_airports.c.rn == 2, ranked_airports.c.airport_name)
+            )
+        ).label('intermediate_airport_2'),
+        func.max(
+            case(
+                (ranked_airports.c.rn == 2, ranked_airports.c.stop_time)
+            )
+        ).label('ia_stop_time_2')
+    ).join(
+        FlightSchedule, Flight.id == FlightSchedule.flight_id
+    ).join(
+        FlightRoute, Flight.flight_route_id == FlightRoute.id
+    ).join(
+        departure_airport, FlightRoute.dep_airport_id == departure_airport.id
+    ).join(
+        destination_airport, FlightRoute.des_airport_id == destination_airport.id
+    ).join(
+        Airplane, Flight.airplane_id == Airplane.id
+    ).join(
+        departure_province, departure_airport.province_id == departure_province.id
+    ).join(
+        destination_province, destination_airport.province_id == destination_province.id
+    ).outerjoin(
+        ranked_airports, ranked_airports.c.flight_id == Flight.id
+    ).filter(
+        departure_province.name == departure,
+        destination_province.name == destination,
+        func.date(FlightSchedule.dep_time) == departure_date
+    ).group_by(
+        Flight.flight_code,
+        FlightSchedule.business_class_price,
+        FlightSchedule.economy_class_price,
+        departure_airport.name,
+        destination_airport.name,
+        FlightSchedule.dep_time,
+        FlightSchedule.flight_time,
+        Airplane.name,
+        Airplane.airplane_type,
+        Flight.id
+    )
 
-    """
     # Thực thi truy vấn
-    cursor.execute(query, (departure, destination, departure_date))
-    results = cursor.fetchall()
-    cursor.close()
-    conn.close()
+    results = query.all()
 
     # Chuyển đổi kết quả thành danh sách dictionary
     flights = [
@@ -159,16 +178,16 @@ def load_flights(departure, destination, departure_date):
             "destination_airport": row[4],  # Sân bay đến
             "departure_time": row[5],  # Giờ khởi hành
             "arrival_time": row[6],  # Giờ đến
-            "flight_time": row[7],  # Thời gian bay
+            "flight_time": format_flight_time(row[7]),  # Thời gian bay
             "airplane_name": row[8],  # Tên máy bay
             "airline_name": row[9],  # Tên hãng hàng không
-            "remaining_business_seats": row[10],  # Thời gian dừng
-            "remaining_economy_seats": row[11],  # Số ghế hạng 1 còn lại
-            "flight_id": row[12],  # Số ghế hạng 2 còn lại
-            "intermediate_airport_1":row[13],
-            "intermediate_airport_2":row[14],
-            "ia_stop_time_1":row[15],
-            "ia_stop_time_2":row[16]
+            "remaining_business_seats": row[10],  # Số ghế hạng 1 còn lại
+            "remaining_economy_seats": row[11],  # Số ghế hạng 2 còn lại
+            "flight_id": row[12],  # ID chuyến bay
+            "intermediate_airport_1": row[13],  # Sân bay trung gian 1
+            "ia_stop_time_1": format_flight_time(row[14]),  # Thời gian dừng tại sân bay trung gian 1
+            "intermediate_airport_2": row[15],  # Sân bay trung gian 2
+            "ia_stop_time_2": format_flight_time(row[16]),  # Thời gian dừng tại sân bay trung gian 2
         }
         for row in results
     ]
@@ -176,3 +195,19 @@ def load_flights(departure, destination, departure_date):
     return flights
 
 
+def get_available_seats(flight_id, seat_class):
+    return db.session.query(Seat).join(SeatAssignment).join(FlightSchedule) \
+        .filter(
+        FlightSchedule.flight_id == flight_id,
+        SeatAssignment.is_available == True,
+        Seat.seat_class == seat_class
+    ).options(joinedload(Seat.seat_assignments)).all()
+
+
+def format_flight_time(flight_time):
+    if flight_time < 60:
+        return f"{flight_time} phút"
+    else:
+        hours = flight_time // 60
+        minutes = flight_time % 60
+        return f"{hours} giờ {str(minutes).zfill(2)} phút"

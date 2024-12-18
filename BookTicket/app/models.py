@@ -24,10 +24,14 @@ class UserRole(RoleEnum):
     USER = 2
     STAFF = 3
 
+
 class Airline(AirlineEnum):
     Bamboo_AirWays = 1
     Vietjet_Air = 2
     VietNam_Airline = 3
+
+    def __str__(self):
+        return self.name.replace('_', ' ')
 
 
 class TicketClass(TicketClassEnum):
@@ -129,7 +133,7 @@ class Airplane(BaseModel):
         seat_letters = ['A', 'B', 'C', 'D', 'E', 'F']  # Các cột từ A đến F
 
         # Tạo ghế Business
-        for row in range(1, math.ceil(self.business_class_seat_size / 6) + 1):
+        for row in range(1, math.ceil(self.business_class_seat_size / app.config["NUMBER_ROWS"]) + 1):
             for col_idx, letter in enumerate(seat_letters):
                 if len(seats) >= self.business_class_seat_size:  # Dừng nếu đủ số ghế
                     break

@@ -7,6 +7,8 @@ import dao
 from app import app, login, db
 from flask_login import login_user, logout_user
 from app.models import UserRole, Customer, Gender, Flight, Airplane
+from flask_login import login_user, logout_user, current_user, login_required
+from app.models import UserRole, Customer, Gender, TicketClass
 from datetime import datetime
 
 
@@ -188,7 +190,6 @@ def flight_schedule():
                                bussiness_seats=bussiness_seats, ecnomic_seats=ecnomic_seats, flight_code=flight_code)
 
     return render_template('schedule.html', flightcodes=flightcodes, airports=airports)
-
 
 
 if __name__ == '__main__':
