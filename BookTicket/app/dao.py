@@ -60,6 +60,22 @@ def load_flights(departure, destination, departure_date):
     )
     cursor = conn.cursor()
     query = """
+        WITH RankedAirports AS (
+            SELECT 
+                f.flight_code,
+                ia.airport_id,
+                a.name AS airport_name,
+                ia.stop_time,
+                ROW_NUMBER() OVER (PARTITION BY f.flight_code ORDER BY ia.stop_time) AS rn
+            FROM 
+                flight f
+            LEFT JOIN 
+                intermediate_airport ia ON f.id = ia.flight_id
+            LEFT JOIN 
+                airport a ON ia.airport_id = a.id
+            WHERE 
+                ia.stop_time IS NOT NULL
+        )
         SELECT 
             f.flight_code,  -- Mã chuyến bay,
             fs.business_class_price AS business_price,  -- Giá vé hạng 1
@@ -79,16 +95,6 @@ def load_flights(departure, destination, departure_date):
             END AS flight_time,
             ap.name AS airplane_name,  -- Tên máy bay
             ap.airplane_type AS airline_name,  -- Tên hãng hàng không
-            a.name AS intermediate_airport,  -- Tên sân bay trung gian
-            CASE 
-                WHEN ia.stop_time < 60 THEN 
-                    CONCAT(ia.stop_time, ' phút')
-                ELSE 
-                    CONCAT(
-                        FLOOR(ia.stop_time / 60), ' giờ ',
-                        LPAD(MOD(ia.stop_time, 60), 2, '0'), ' phút'
-                    )
-            END AS stop_time,
             (SELECT COUNT(*) 
              FROM seat_assignment sa
              JOIN seat s ON sa.seat_id = s.id
@@ -97,7 +103,12 @@ def load_flights(departure, destination, departure_date):
              FROM seat_assignment sa
              JOIN seat s ON sa.seat_id = s.id
              WHERE sa.flight_schedule_id = fs.id AND sa.is_available = 1 AND s.seat_class = 2) AS remaining_economy_seats,
-             f.id 
+            f.id,
+            MAX(CASE WHEN rn = 1 THEN ra.airport_name END) AS intermediate_airport_1,  -- Tên sân bay trung gian 1
+            MAX(CASE WHEN rn = 2 THEN ra.airport_name END) AS intermediate_airport_2,  -- Tên sân bay trung gian 2
+            MAX(CASE WHEN rn = 1 THEN ra.stop_time END) AS ia_stop_time_1,  -- Thời gian dừng trung gian 1
+            MAX(CASE WHEN rn = 2 THEN ra.stop_time END) AS ia_stop_time_2   -- Thời gian dừng trung gian 2
+  
         FROM 
             flight_schedule fs
         JOIN 
@@ -115,6 +126,8 @@ def load_flights(departure, destination, departure_date):
         LEFT JOIN 
             airport a ON ia.airport_id = a.id
         LEFT JOIN 
+            RankedAirports ra ON f.flight_code = ra.flight_code
+        LEFT JOIN 
             seat_assignment sa ON sa.flight_schedule_id = fs.id
         JOIN 
             province dep_province ON dep_airport.province_id = dep_province.id
@@ -126,8 +139,8 @@ def load_flights(departure, destination, departure_date):
             AND DATE(fs.dep_time) = %s  -- Ngày khởi hành
         GROUP BY 
             f.flight_code, fs.business_class_price, fs.economy_class_price, dep_airport.name, des_airport.name, 
-            fs.dep_time, fs.flight_time, a.name, ap.name, ia.airport_id, ia.stop_time, fs.business_class_seat_size, 
-            fs.economy_class_seat_size;
+            fs.dep_time, fs.flight_time, ap.name, ap.airplane_type, f.id;
+
 
     """
     # Thực thi truy vấn
@@ -149,13 +162,17 @@ def load_flights(departure, destination, departure_date):
             "flight_time": row[7],  # Thời gian bay
             "airplane_name": row[8],  # Tên máy bay
             "airline_name": row[9],  # Tên hãng hàng không
-            "intermediate_airport": row[10],  # Tên sân bay trung gian
-            "stop_time": row[11],  # Thời gian dừng
-            "remaining_business_seats": row[12],  # Số ghế hạng 1 còn lại
-            "remaining_economy_seats": row[13],  # Số ghế hạng 2 còn lại
-            "flight_id":row[14]
+            "remaining_business_seats": row[10],  # Thời gian dừng
+            "remaining_economy_seats": row[11],  # Số ghế hạng 1 còn lại
+            "flight_id": row[12],  # Số ghế hạng 2 còn lại
+            "intermediate_airport_1":row[13],
+            "intermediate_airport_2":row[14],
+            "ia_stop_time_1":row[15],
+            "ia_stop_time_2":row[16]
         }
         for row in results
     ]
 
     return flights
+
+

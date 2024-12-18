@@ -108,19 +108,17 @@
                 </div>
             </div>
         </div>
-
-
         <!-- Số ghế thương gia -->
         <div class="col-md-6 mb-3">
             <label class="font-weight-bold mb-2">Số ghế thương gia</label>
-            <input type="number" class="form-control" name="business_seats" placeholder="Nhập số ghế thương gia"
-                   value="2" min="0">
+            <input type="number" class="form-control" name="bussiness_seats" placeholder="Nhập số ghế thương gia"
+                   value="{{ bussiness_seats }}" min="0">
         </div>
         <!-- Số ghế phổ thông -->
         <div class="col-md-6 mb-3">
             <label class="font-weight-bold mb-2">Số ghế phổ thông</label>
-            <input type="number" class="form-control" name="economic_seats" placeholder="Nhập số ghế phổ thông"
-                   value="1"
+            <input type="number" class="form-control" name="ecnomic_seats" placeholder="Nhập số ghế phổ thông"
+                   value="{{ ecnomic_seats }}"
                    min="0">
         </div>
     </div>
@@ -296,6 +294,59 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 
+</script>
+<!-- Loại bỏ thẻ <script> lồng nhau -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const flightSelect = document.getElementById("flight_code");  // Dropdown chọn chuyến bay
+    const businessSeatsInput = document.querySelector('input[name="bussiness_seats"]'); // Input ghế thương gia
+    const economySeatsInput = document.querySelector('input[name="ecnomic_seats"]'); // Input ghế phổ thông
 
+    let maxBusinessSeats = 0;  // Biến lưu số ghế thương gia tối đa
+    let maxEconomySeats = 0;   // Biến lưu số ghế phổ thông tối đa
+
+    // Gửi AJAX khi chọn chuyến bay
+    flightSelect.addEventListener("change", function () {
+        const flightCode = this.value;
+
+        fetch("/get_seat_info", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ flight_code: flightCode })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Cập nhật giá trị và giới hạn input
+            maxBusinessSeats = data.business_seats;
+            maxEconomySeats = data.economy_seats;
+
+            businessSeatsInput.value = data.business_seats;
+            businessSeatsInput.max = data.business_seats;
+            businessSeatsInput.min = 0;
+
+            economySeatsInput.value = data.economy_seats;
+            economySeatsInput.max = data.economy_seats;
+            economySeatsInput.min = 0;
+        })
+        .catch(error => console.error("Error:", error));
+    });
+
+    // Giới hạn người dùng nhập liệu
+    function validateInput(inputElement, maxValue) {
+        inputElement.addEventListener("input", function () {
+            if (this.value > maxValue) {
+                this.value = maxValue;  // Gán lại giá trị tối đa nếu vượt quá
+            } else if (this.value < 0) {
+                this.value = 0;  // Gán lại giá trị tối thiểu nếu nhỏ hơn 0
+            }
+        });
+    }
+
+    // Gọi hàm validate cho các input
+    validateInput(businessSeatsInput, maxBusinessSeats);
+    validateInput(economySeatsInput, maxEconomySeats);
+});
 </script>
 {% endblock %}

@@ -2,12 +2,11 @@ import hashlib
 import string
 
 from flask import render_template, request, redirect,flash
-from sqlalchemy import Integer
 
 import dao
 from app import app, login, db
 from flask_login import login_user, logout_user
-from app.models import UserRole, Customer, Gender
+from app.models import UserRole, Customer, Gender, Flight, Airplane
 from datetime import datetime
 
 
@@ -140,10 +139,10 @@ def book_tickets():
     total = price * passenger
     formatted_total = "{:,.0f}".format(total).replace(',', '.')
 
-
     return render_template('booking.html', departure=departure, destination=destination, passenger=passenger,
                            departure_date=departure_date, flight_time=flight_time, departure_time=departure_time, arrival_time=arrival_time,
                            price=formatted_price, ticket_class=ticket_class, total=formatted_total)
+
 
 @app.route('/add_customer', methods=['POST'])
 def add_customer():
@@ -174,13 +173,22 @@ def add_customer():
     return redirect('/')  # Trỏ về trang tóm tắt chuyến bay hoặc thanh toán
 
 
-
-@app.route('/schedule')
+@app.route('/schedule', methods=['GET', 'POST'])
 def flight_schedule():
     flightcodes = dao.load_flight()
     airports = dao.load_airport()
+    if request.method == 'POST':
+        flight_code = request.form.get('flight_code')
+        flight = Flight.query.get(flight_code)
+        airplane = Airplane.query.get(flight.airplane_id)
+
+        bussiness_seats = airplane.business_class_seat_size
+        ecnomic_seats = airplane.economy_class_seat_size
+        return render_template('schedule.html', flightcodes=flightcodes, airports=airports,
+                               bussiness_seats=bussiness_seats, ecnomic_seats=ecnomic_seats, flight_code=flight_code)
 
     return render_template('schedule.html', flightcodes=flightcodes, airports=airports)
+
 
 
 if __name__ == '__main__':
