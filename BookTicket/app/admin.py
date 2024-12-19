@@ -24,6 +24,7 @@ class FlightView(AuthenticatedView):
     # column_list = ['flight_code', 'flight_route', 'airplane']
     form_excluded_columns = ['flight_schedules', 'tickets', 'inter_airports']
 
+
 class PolicyView(AuthenticatedView):
     can_create = False
 

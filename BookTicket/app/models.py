@@ -182,7 +182,7 @@ class FlightSchedule(BaseModel):
     business_class_price = Column(Integer, nullable=False)
     economy_class_price = Column(Integer, nullable=False)
 
-    flight_id = Column(Integer, ForeignKey(Flight.id), nullable=False, unique=True)
+    flight_id = Column(Integer, ForeignKey(Flight.id), nullable=False)
 
     seat_assignments = relationship('SeatAssignment', backref='flight_schedule', lazy=True)
 
@@ -580,7 +580,6 @@ if __name__ == '__main__':
         for schedule in flight_schedules:
             flight_schedule = FlightSchedule(**schedule)
             db.session.add(flight_schedule)
-            db.session.commit()
             flight_schedule.create_seat_assignments()
 
         # Thêm dữ liệu vào bảng IntermediateAirport

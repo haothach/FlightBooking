@@ -1,7 +1,7 @@
 import hashlib
 import string
 
-from flask import render_template, request, redirect,flash
+from flask import render_template, request, redirect,flash, jsonify
 
 import dao
 from app import app, login, db
@@ -175,7 +175,7 @@ def add_customer():
     return redirect('/')  # Trỏ về trang tóm tắt chuyến bay hoặc thanh toán
 
 
-@app.route('/schedule', methods=['GET', 'POST'])
+@app.route('/api/schedule', methods=['GET', 'POST'])
 def flight_schedule():
     flightcodes = dao.load_flight()
     airports = dao.load_airport()
@@ -189,7 +189,31 @@ def flight_schedule():
         return render_template('schedule.html', flightcodes=flightcodes, airports=airports,
                                bussiness_seats=bussiness_seats, ecnomic_seats=ecnomic_seats, flight_code=flight_code)
 
+        data = request.get_json()
+        flight_schedules = [
+            {
+                "dep_time": data['dep_time'],
+                "flight_time": data['flight_time'],
+                "flight_id": data['flight_id'],
+                "business_class_seat_size": data['business_class_seat_size'],
+                "economy_class_seat_size": data['economy_class_seat_size'],
+                "business_class_price": data['first_class_price'],  # Giá business cao hơn economy
+                "economy_class_price": data['second_class_price']
+            }]
+        db.session.add(flight_schedules)
+
+        intermediate_airports = [
+            {"airport_id": 3, "flight_id": 1, "stop_time": 30, "note": "Dừng đón khách"}]
     return render_template('schedule.html', flightcodes=flightcodes, airports=airports)
+
+
+@app.route('/api/schedule/<flight_id>')
+def update_seats(flight_id):
+    seats = dao.get_max_seat(flight_id)
+    return jsonify({
+        'first_class_seat': seats[0],
+        'second_class_seat': seats[1]
+    }), 200
 
 
 if __name__ == '__main__':
