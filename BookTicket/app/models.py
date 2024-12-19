@@ -53,6 +53,7 @@ class User(BaseModel, UserMixin):
     user_role = Column(Enum(UserRole), default=UserRole.USER)
 
     tickets = relationship('Ticket', backref='user', lazy=True)
+    receipts = relationship('Receipt', backref='user', lazy=True)
 
 
 class Customer(BaseModel):
@@ -342,6 +343,8 @@ class Ticket(BaseModel):
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
     customer_id = Column(Integer, ForeignKey(Customer.id), nullable=False)
 
+    receipt_details = relationship('ReceiptDetail', backref='ticket', lazy=True)
+
 
 class Policy(BaseModel):
     number_airport = Column(Integer, nullable=False)
@@ -354,6 +357,17 @@ class Policy(BaseModel):
     ticket_sell_time = Column(Integer, nullable=False)
     ticket_booking_time = Column(Integer, nullable=False)
 
+class Receipt(BaseModel):
+    user_id = Column(Integer, ForeignKey(User.id), nullable=False)
+    created_date = Column(DateTime, default=datetime.datetime.utcnow)
+
+    receipt_details = relationship('ReceiptDetail', backref='receipt', lazy=True)
+
+class ReceiptDetail(BaseModel):
+    quantity = Column(Integer, default=0)
+    unit_price = Column(Integer, default=0)
+    ticket_id = Column(Integer, ForeignKey(Ticket.id), nullable=False)
+    receipt_id = Column(Integer, ForeignKey(Receipt.id), nullable=False)
 
 if __name__ == '__main__':
     with app.app_context():

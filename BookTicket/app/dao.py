@@ -9,6 +9,7 @@ import sqlite3, pymysql
 from datetime import timedelta, datetime
 from sqlalchemy.orm import joinedload, aliased
 from sqlalchemy import func, text, and_
+from flask_login import current_user
 
 
 def load_province():
@@ -22,6 +23,11 @@ def load_airport():
 def load_flight():
     return Flight.query.order_by('id').all()
 
+def get_flight_by_id(flight_id):
+    return db.session.query(Flight).options(
+        joinedload(Flight.inter_airports),
+        joinedload(Flight.flight_schedules)
+    ).filter(Flight.id == flight_id).first()
 
 def add_user(name, username, password, avatar):
     password = str(hashlib.md5(password.encode('utf-8')).hexdigest())
@@ -185,14 +191,38 @@ def load_flights(departure, destination, departure_date):
             "remaining_economy_seats": row[11],  # Số ghế hạng 2 còn lại
             "flight_id": row[12],  # ID chuyến bay
             "intermediate_airport_1": row[13],  # Sân bay trung gian 1
-            "ia_stop_time_1": format_flight_time(row[14]),  # Thời gian dừng tại sân bay trung gian 1
+            "ia_stop_time_1": row[14],  # Thời gian dừng tại sân bay trung gian 1
             "intermediate_airport_2": row[15],  # Sân bay trung gian 2
-            "ia_stop_time_2": format_flight_time(row[16]),  # Thời gian dừng tại sân bay trung gian 2
+            "ia_stop_time_2": row[16],  # Thời gian dừng tại sân bay trung gian 2
         }
         for row in results
     ]
 
     return flights
+
+
+def get_available_seats_by_row(flight_id, seat_class):
+    # Lấy tất cả các ghế trống theo flight_id và seat_class
+    available_seats = db.session.query(Seat).join(SeatAssignment).join(FlightSchedule) \
+        .filter(
+            FlightSchedule.flight_id == flight_id,
+            SeatAssignment.is_available == True,
+            Seat.seat_class == seat_class
+        ).options(joinedload(Seat.seat_assignments)).all()
+
+    # Nhóm ghế theo hàng
+    rows = {}
+    for seat in available_seats:
+        # Tách số hàng và chữ ghế (ví dụ E1A => row=1, seat_code='A')
+        row_number = int(seat.seat_code[1:-1])  # lấy phần số của mã ghế (E1A => 1)
+        seat_code = seat.seat_code[-1]  # lấy phần chữ của mã ghế (E1A => A)
+
+        if row_number not in rows:
+            rows[row_number] = []
+
+        rows[row_number].append(seat_code)
+
+    return rows
 
 
 def get_available_seats(flight_id, seat_class):
@@ -211,3 +241,5 @@ def format_flight_time(flight_time):
         hours = flight_time // 60
         minutes = flight_time % 60
         return f"{hours} giờ {str(minutes).zfill(2)} phút"
+
+
