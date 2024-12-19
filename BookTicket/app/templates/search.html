@@ -142,9 +142,7 @@
                             <p class="text-muted">Còn lại: {{ f.remaining_economy_seats }} ghế</p>
                             <input type="hidden" name="passenger" value="{{ request.args.get('passenger') }}">
                             <input type="hidden" name="flight_id" value="{{ f.flight_id }}">
-                            <input type="hidden" name="departure" value="{{ departure }}">
-                            <input type="hidden" name="destination" value="{{ destination }}">
-                            <input type="hidden" name="class" value="economy">
+                            <input type="hidden" name="class" value="Economy_Class">
                             <input type="hidden" name="departure_date" value="{{ departure_date }}">
                             <input type="hidden" name="departure_time" value="{{ f.departure_time.strftime('%H:%M') }}">
                             <input type="hidden" name="arrival_time" value="{{ f.arrival_time.strftime('%H:%M') }}">
@@ -162,9 +160,7 @@
                             <p class="text-muted">Còn lại: {{ f.remaining_business_seats }} ghế</p>
                             <input type="hidden" name="passenger" value="{{ request.args.get('passenger') }}">
                             <input type="hidden" name="flight_id" value="{{ f.flight_id }}">
-                            <input type="hidden" name="departure" value="{{ departure }}">
-                            <input type="hidden" name="destination" value="{{ destination }}">
-                            <input type="hidden" name="class" value="business">
+                            <input type="hidden" name="class" value="Business_Class">
                             <input type="hidden" name="departure_date" value="{{ departure_date }}">
                             <input type="hidden" name="departure_time" value="{{ f.departure_time.strftime('%H:%M') }}">
                             <input type="hidden" name="arrival_time" value="{{ f.arrival_time.strftime('%H:%M')  }}">
