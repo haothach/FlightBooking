@@ -6,7 +6,8 @@ from flask import render_template, request, redirect, flash, jsonify
 import dao
 from app import app, login, db
 from flask_login import login_user, logout_user
-from app.models import UserRole, Customer, Gender, Flight, Airplane, Ticket, SeatAssignment, Seat, IntermediateAirport, FlightRoute, FlightSchedule
+from app.models import (UserRole, Customer, Gender, Flight, Airplane, Ticket, SeatAssignment, Seat, IntermediateAirport,
+                        FlightRoute, FlightSchedule, Receipt, ReceiptDetail)
 from flask_login import login_user, logout_user, current_user, login_required
 from app.models import UserRole, Customer, Gender, TicketClass
 from datetime import datetime
@@ -248,33 +249,71 @@ def add_ticket(customer, seat_code):
     db.session.add(ticket)
     db.session.commit()
 
+def create_receipt(user_id, total, ticket_ids):
+    # Tạo Receipt
+    receipt = Receipt(
+        user_id=user_id,
+        total=total
+    )
+    db.session.add(receipt)
+    db.session.commit()  # Lưu Receipt vào DB để lấy ID
+
+    # Tạo ReceiptDetail cho từng Ticket ID
+    for ticket_id in ticket_ids:
+        receipt_detail = ReceiptDetail(
+            quantity=1,  # Mặc định 1 vé tương ứng 1 ReceiptDetail
+            unit_price=total // len(ticket_ids),  # Giá vé chia đều (nếu có nhiều vé)
+            ticket_id=ticket_id,
+            receipt_id=receipt.id
+        )
+        db.session.add(receipt_detail)
+
+    db.session.commit()  # Lưu ReceiptDetail vào DB
+    return receipt
+
 
 @app.route('/add_data', methods=['POST'])
 def add_data():
-    # Add customers and tickets to the database
+    # Xử lý thông tin hành khách và vé
     add_customer()
 
-    passengers = []  # Store details of all passengers
+    passengers = []  # Lưu thông tin hành khách
+    ticket_ids = []  # Lưu danh sách Ticket ID cho ReceiptDetail
     for p in range(int(request.form.get('passenger_count'))):
         name = request.form.get(f'passenger_name_{p}')
         seat_code = request.form.get(f'seat_{p}')
-        passengers.append({
-            'name': name,
-            'seat_code': seat_code
-        })
 
-    flight_id = request.form.get('flight')
+        # Lấy Ticket ID đã được tạo
+        ticket = db.session.query(Ticket).join(SeatAssignment).join(Seat).filter(
+            Seat.seat_code == seat_code
+        ).first()
+
+        if ticket:
+            ticket_ids.append(ticket.id)
+
+        passengers.append({'name': name, 'seat_code': seat_code})
+
+    # Lấy tổng tiền từ form và xử lý
+    total_str = request.form.get('total')  # Giá trị từ form
+    total = int(total_str.replace('.', '').replace(',', ''))  # Loại bỏ dấu phân cách và chuyển đổi
+
+    user_id = current_user.id  # ID người dùng đã đăng nhập
+
+    # Tạo hóa đơn và chi tiết hóa đơn
+    receipt = create_receipt(user_id, total, ticket_ids)
+
+    # Lấy thông tin chuyến bay
+    flight_id = request.form.get('flight_id')
     flight = dao.get_flight_by_id(flight_id)
     departure_date = request.form.get('departure_date')
     departure_time = request.form.get('departure_time')
     arrival_time = request.form.get('arrival_time')
-    total = request.form.get('total')  # Total amount from the form
 
-    # Return the receipt view with the necessary data
+    # Render hóa đơn
     return render_template('receipt.html', passengers=passengers,
                            flight=flight, departure_date=departure_date,
                            departure_time=departure_time, arrival_time=arrival_time,
-                           total=total)
+                           total=total, receipt=receipt)
 
 
 @app.route('/api/schedule', methods=['GET', 'POST'])
@@ -327,15 +366,6 @@ def flight_schedule():
         db.session.commit()
 
     return render_template('schedule.html', flightcodes=flightcodes, airports=airports)
-
-
-@app.route('/api/schedule/<flight_id>')
-def update_seats(flight_id):
-    seats = dao.get_max_seat(flight_id)
-    return jsonify({
-        'first_class_seat': seats[0],
-        'second_class_seat': seats[1]
-    }), 200
 
 
 if __name__ == '__main__':

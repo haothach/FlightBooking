@@ -168,7 +168,8 @@ def load_flights(departure, destination, departure_date):
         FlightSchedule.flight_time,
         Airplane.name,
         Airplane.airplane_type,
-        Flight.id
+        Flight.id,
+        FlightSchedule.id
     )
 
     # Thực thi truy vấn

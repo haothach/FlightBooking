@@ -360,6 +360,7 @@ class Policy(BaseModel):
 
 class Receipt(BaseModel):
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
+    total = Column(Integer, nullable=False)
     created_date = Column(DateTime, default=datetime.datetime.utcnow)
 
     receipt_details = relationship('ReceiptDetail', backref='receipt', lazy=True)

@@ -10,6 +10,11 @@
 {% endif %}
 <form action="/add_data" method="POST" id="paymentForm">
     <input type="hidden" name="passenger_count" value="{{ passenger }}">
+    <input type="hidden" name="flight_id" value="{{ flight.id }}">
+    <input type="hidden" name="departure_date" value="{{ departure_date }}">
+    <input type="hidden" name="departure_time" value="{{ departure_time}}">
+    <input type="hidden" name="arrival_time" value="{{ arrival_time }}">
+    <input type="hidden" name="total" value="{{ total }}">
     <!-- Chi tiết hành khách -->
     {% for p in range(passenger) %}
     <h4 class="mt-4">Chi tiết hành khách {{ p + 1 }}</h4>
