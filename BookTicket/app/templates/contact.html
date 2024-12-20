@@ -1,0 +1,66 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="container mt-3">
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/">bookticket</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="/">Trang chủ</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/contact">Liên hệ</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-5">
+    <h1 class="text-center text-primary">Liên hệ với chúng tôi</h1>
+    <p class="text-center">Chúng tôi luôn sẵn sàng hỗ trợ bạn!</p>
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <h3>Thông tin liên hệ</h3>
+            <p><strong>Địa chỉ:</strong> 1508/34, Nhơn Đức Nhà Bè, TP.HCM</p>
+            <p><strong>Email:</strong> support@bookticket.com</p>
+            <p><strong>Hotline:</strong> 1900 1234</p>
+            <p><strong>Giờ làm việc:</strong> 8:00 sáng - 10:00 tối, Thứ Hai - Chủ Nhật</p>
+        </div>
+        <div class="col-md-6">
+            <h3>Gửi thông tin liên hệ</h3>
+            <form action="/submit-contact" method="POST">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Họ và tên</label>
+                    <input type="text" class="form-control" id="name" name="name" placeholder="Nhập họ và tên của bạn"
+                           required>
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="Nhập email của bạn"
+                           required>
+                </div>
+                <div class="mb-3">
+                    <label for="message" class="form-label">Nội dung</label>
+                    <textarea class="form-control" id="message" name="message" rows="4"
+                              placeholder="Nhập nội dung cần hỗ trợ" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-danger btn-lg">Gửi</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
