@@ -23,11 +23,17 @@ def load_airport():
 def load_flight():
     return Flight.query.order_by('id').all()
 
+
+def load_ariplane():
+    return Airplane.query.order_by('id').all()
+
+
 def get_flight_by_id(flight_id):
     return db.session.query(Flight).options(
         joinedload(Flight.inter_airports),
         joinedload(Flight.flight_schedules)
     ).filter(Flight.id == flight_id).first()
+
 
 def add_user(name, username, password, avatar):
     password = str(hashlib.md5(password.encode('utf-8')).hexdigest())
@@ -243,13 +249,11 @@ def format_flight_time(flight_time):
         return f"{hours} giờ {str(minutes).zfill(2)} phút"
 
 
-def get_max_seat(flight_id):
+def get_max_seat(airplane_id):
     return db.session.query(
         Airplane.business_class_seat_size,
         Airplane.economy_class_seat_size
-
-    ).join(Flight).filter(
-        Flight.id == flight_id,
-        Airplane.id == Flight.airplane_id
+    ).filter(
+        Airplane.id == airplane_id
     ).first()
 

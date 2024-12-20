@@ -7,14 +7,25 @@
 
 <form action="/schedule" method="POST">
     <!-- Mã chuyến bay -->
-    <div class="form-group mb-4">
-        <label for="flight_id" class="font-weight-bold mb-2">Mã chuyến bay</label>
-        <select class="form-control" id="flight_id" name="flight_code" required onchange="fetchSeat(this.value)">
-            <option value="" disabled selected>Chọn mã chuyến bay</option>
-            {% for f in flightcodes %}
-            <option value="{{ f.id }}">{{f.flight_code}}</option>
-            {% endfor %}
-        </select>
+    <div class="row mb-4 border p-3">
+        <div class="col-md-6">
+            <label for="flight_id" class="font-weight-bold mb-2">Mã chuyến bay</label>
+            <select class="form-control" id="flight_id" name="flight_code" required>
+                <option value="" disabled selected>Chọn mã chuyến bay</option>
+                {% for f in flightcodes %}
+                <option value="{{ f.flight_code }}">{{f.flight_code}}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label for="airplane_id" class="font-weight-bold mb-2">Chọn máy bay</label>
+            <select class="form-control" id="airplane_id" name="airplane" required onchange="fetchSeat(this.value)">
+                <option value="" disabled selected>Chọn máy bay</option>
+                {% for a in airplanes %}
+                <option value="{{ a.id }}">{{a.name}}</option>
+                {% endfor %}
+            </select>
+        </div>
     </div>
 
     <!-- Thông tin sân bay -->
@@ -111,24 +122,28 @@
         <!-- Số ghế thương gia -->
         <div class="col-md-3 mb-3">
             <label class="font-weight-bold mb-2">Số ghế thương gia</label>
-            <input type="number" class="form-control" name="bussiness_seats" id="first_class_seats" placeholder="Nhập số ghế thương gia"
+            <input type="number" class="form-control" name="bussiness_seats" id="first_class_seats"
+                   placeholder="Nhập số ghế thương gia"
                    value="" min="0" max="">
         </div>
         <div class="col-md-3 mb-3">
             <label class="font-weight-bold mb-2">Giá ghế thương gia</label>
-            <input type="number" class="form-control" name="bussiness_seats" id="first_class_price" placeholder="Nhập số tiền"
+            <input type="number" class="form-control" name="bussiness_seats" id="first_class_price"
+                   placeholder="Nhập số tiền"
                    value="" min="0" max="">
         </div>
         <!-- Số ghế phổ thông -->
         <div class="col-md-3 mb-3">
             <label class="font-weight-bold mb-2">Số ghế phổ thông</label>
-            <input type="number" class="form-control" name="ecnomic_seats" id="second_class_seats" placeholder="Nhập số ghế phổ thông"
+            <input type="number" class="form-control" name="ecnomic_seats" id="second_class_seats"
+                   placeholder="Nhập số ghế phổ thông"
                    value=""
                    min="0" max="">
         </div>
         <div class="col-md-3 mb-3">
             <label class="font-weight-bold mb-2">Giá ghế phổ thông</label>
-            <input type="number" class="form-control" name="ecnomic_seats" id="second_class_price" placeholder="Nhập số tiền"
+            <input type="number" class="form-control" name="ecnomic_seats" id="second_class_price"
+                   placeholder="Nhập số tiền"
                    value=""
                    min="0" max="">
         </div>
@@ -307,8 +322,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 //Thay đỗi số lượng hạng ghế dựa trên flight id
-    function fetchSeat(flightId){
-        fetch(`/api/schedule/${flightId}`)
+    function fetchSeat(airplaneId){
+        fetch(`/api/schedule/${airplaneId}`)
             .then(res => res.json())
             .then(data =>{
                 document.getElementById('first_class_seats').value = data.first_class_seat;
@@ -319,7 +334,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     //Lập lịch
-    let flightId = document.getElementById('flight_id').value;
+    let flightCode = document.getElementById('flight_id').value;
+    let airplaneId = document.getElementById('airplane_id').value;
     let depAirport = document.getElementById('dep_airport').value;
     let desAirport = document.getElementById('des_airport').value;
     let first_class_seats = document.getElementById('first_class_seats').value;
@@ -369,7 +385,8 @@ document.addEventListener("DOMContentLoaded", function () {
     );
 
     const data = {
-        flight_id: flightId,
+        flight_code: flightCode,
+        airplane_id:airplaneId,
         dep_airport: depAirport,
         des_airport: desAirport,
         dep_time: formattedDateTime,
@@ -418,7 +435,5 @@ document.addEventListener("DOMContentLoaded", function () {
             alert('Lưu dữ liệu thất bại!');
         });
     }
-
-
 </script>
 {% endblock %}

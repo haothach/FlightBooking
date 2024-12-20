@@ -281,15 +281,30 @@ def add_data():
 def flight_schedule():
     flightcodes = dao.load_flight()
     airports = dao.load_airport()
+    airplanes = dao.load_ariplane()
 
     if request.method == 'POST':
         data = request.get_json()
 
-        # Tạo đối tượng lịch bay
+        flight_route = FlightRoute(
+            dep_airport_id=data['dep_airport'],
+            des_airport_id=data['des_airport']
+        )
+        db.session.add(flight_route)
+        db.session.commit()
+
+        flight = Flight(
+            flight_code=data['flight_code'],
+            flight_route=flight_route.id,
+            airplane_id=data['airplane_id']
+        )
+        db.session.add(flight)
+        db.session.commit()
+
         flight_schedule = FlightSchedule(
             dep_time=data['dep_time'],
             flight_time=data['flight_time'],
-            flight_id=data['flight_id'],
+            flight_id=flight.id,
             business_class_seat_size=data['business_class_seat_size'],
             economy_class_seat_size=data['economy_class_seat_size'],
             business_class_price=data['first_class_price'],
@@ -297,7 +312,7 @@ def flight_schedule():
         )
         db.session.add(flight_schedule)
 
-        # Xử lý sân bay trung gian
+         # Xử lý sân bay trung gian
         if data.get('ai_1'):
             intermediate_airport_1 = IntermediateAirport(
                 airport_id=data['ai_1'],
@@ -316,22 +331,15 @@ def flight_schedule():
             )
             db.session.add(intermediate_airport_2)
 
-        # Tạo đối tượng tuyến bay
-        flight_route = FlightRoute(
-            dep_airport_id=data['dep_airport'],
-            des_airport_id=data['des_airport']
-        )
-        db.session.add(flight_route)
-
         # Lưu thay đổi vào cơ sở dữ liệu
         db.session.commit()
 
-    return render_template('schedule.html', flightcodes=flightcodes, airports=airports)
+    return render_template('schedule.html', flightcodes=flightcodes, airports=airports, airplanes=airplanes)
 
 
-@app.route('/api/schedule/<flight_id>')
-def update_seats(flight_id):
-    seats = dao.get_max_seat(flight_id)
+@app.route('/api/schedule/<airplane_id>')
+def update_seats(airplane_id):
+    seats = dao.get_max_seat(airplane_id)
     return jsonify({
         'first_class_seat': seats[0],
         'second_class_seat': seats[1]
