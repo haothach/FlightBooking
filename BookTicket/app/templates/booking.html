@@ -14,6 +14,8 @@
     <input type="hidden" name="departure_date" value="{{ departure_date }}">
     <input type="hidden" name="departure_time" value="{{ departure_time}}">
     <input type="hidden" name="arrival_time" value="{{ arrival_time }}">
+    <input type="hidden" name="province_dep" value="{{ flight.flight_route.dep_airport.province.name }}">
+    <input type="hidden" name="province_des" value="{{ flight.flight_route.des_airport.province.name }}">
     <input type="hidden" name="total" value="{{ total }}">
     <!-- Chi tiết hành khách -->
     {% for p in range(passenger) %}

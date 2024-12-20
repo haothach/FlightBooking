@@ -40,7 +40,7 @@
             <h4 class="fw-bold mb-0">Tổng cộng</h4>
         </div>
         <div class="card-body">
-            <p class="fs-5"><strong>Số tiền thanh toán:</strong> {{ total }} VND</p>
+            <p class="fs-5"><strong>Số tiền thanh toán:</strong> {{ "{:,.0f}".format(total).replace(',', '.') }} VND</p>
         </div>
     </div>
 

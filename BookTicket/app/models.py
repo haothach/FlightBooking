@@ -8,7 +8,7 @@ from enum import Enum as RoleEnum
 from enum import Enum as AirlineEnum
 from enum import Enum as TicketClassEnum
 from enum import Enum as GenderEnum
-import datetime
+from datetime import datetime
 from flask_login import UserMixin
 import math
 
@@ -92,6 +92,7 @@ class FlightRoute(BaseModel):
     des_airport_id = Column(Integer, ForeignKey(Airport.id), nullable=False)
 
     flights = relationship('Flight', backref='flight_route', lazy=True)
+    receipt_details = relationship('ReceiptDetail', backref='flight_route', lazy=True)
 
     @validates('dep_airport_id', 'des_airport_id')
     def validate_airports_and_duplicates(self, key, value):
@@ -337,13 +338,13 @@ class IntermediateAirport(db.Model):
 
 
 class Ticket(BaseModel):
-    date_created = Column(DateTime, default=datetime.datetime.utcnow)
+    date_created = Column(DateTime, default=datetime.now())
 
     seat_assignment_id = Column(Integer, ForeignKey(SeatAssignment.id), nullable=False)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
     customer_id = Column(Integer, ForeignKey(Customer.id), nullable=False)
 
-    receipt_details = relationship('ReceiptDetail', backref='ticket', lazy=True)
+
 
 
 class Policy(BaseModel):
@@ -361,7 +362,7 @@ class Policy(BaseModel):
 class Receipt(BaseModel):
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
     total = Column(Integer, nullable=False)
-    created_date = Column(DateTime, default=datetime.datetime.utcnow)
+    created_date = Column(DateTime, default=datetime.now())
 
     receipt_details = relationship('ReceiptDetail', backref='receipt', lazy=True)
 
@@ -369,8 +370,9 @@ class Receipt(BaseModel):
 class ReceiptDetail(BaseModel):
     quantity = Column(Integer, default=0)
     unit_price = Column(Integer, default=0)
-    ticket_id = Column(Integer, ForeignKey(Ticket.id), nullable=False)
     receipt_id = Column(Integer, ForeignKey(Receipt.id), nullable=False)
+
+    flight_route_id = Column(Integer, ForeignKey(FlightRoute.id), nullable=False)
 
 
 if __name__ == '__main__':
@@ -522,7 +524,7 @@ if __name__ == '__main__':
 
         flight_schedules = [
             {
-                "dep_time": datetime.datetime(2024, 12, 10, 8, 30),
+                "dep_time": datetime(2024, 12, 10, 8, 30),
                 "flight_time": 120,
                 "flight_id": 1,
                 "business_class_seat_size": 15,
@@ -531,7 +533,7 @@ if __name__ == '__main__':
                 "economy_class_price": 1500000
             },
             {
-                "dep_time": datetime.datetime(2024, 12, 10, 10, 0),
+                "dep_time": datetime(2024, 12, 10, 10, 0),
                 "flight_time": 90,
                 "flight_id": 2,
                 "business_class_seat_size": 25,
@@ -540,7 +542,7 @@ if __name__ == '__main__':
                 "economy_class_price": 3000000
             },
             {
-                "dep_time": datetime.datetime(2024, 12, 10, 12, 0),
+                "dep_time": datetime(2024, 12, 10, 12, 0),
                 "flight_time": 80,
                 "flight_id": 3,
                 "business_class_seat_size": 20,
@@ -549,7 +551,7 @@ if __name__ == '__main__':
                 "economy_class_price": 1500000
             },
             {
-                "dep_time": datetime.datetime(2024, 12, 10, 15, 0),
+                "dep_time": datetime(2024, 12, 10, 15, 0),
                 "flight_time": 100,
                 "flight_id": 4,
                 "business_class_seat_size": 15,
@@ -558,7 +560,7 @@ if __name__ == '__main__':
                 "economy_class_price": 2000000
             },
             {
-                "dep_time": datetime.datetime(2024, 12, 11, 8, 0),
+                "dep_time": datetime(2024, 12, 11, 8, 0),
                 "flight_time": 130,
                 "flight_id": 5,
                 "business_class_seat_size": 30,
@@ -567,7 +569,7 @@ if __name__ == '__main__':
                 "economy_class_price": 5500000
             },
             {
-                "dep_time": datetime.datetime(2024, 12, 10, 14, 0),
+                "dep_time": datetime(2024, 12, 10, 14, 0),
                 "flight_time": 95,
                 "flight_id": 6,
                 "business_class_seat_size": 20,
@@ -576,7 +578,7 @@ if __name__ == '__main__':
                 "economy_class_price": 1500000
             },
             {
-                "dep_time": datetime.datetime(2024, 12, 10, 10, 30),
+                "dep_time": datetime(2024, 12, 10, 10, 30),
                 "flight_time": 115,
                 "flight_id": 7,
                 "business_class_seat_size": 15,
@@ -585,7 +587,7 @@ if __name__ == '__main__':
                 "economy_class_price": 1500000
             },
             {
-                "dep_time": datetime.datetime(2024, 12, 12, 17, 0),
+                "dep_time": datetime(2024, 12, 12, 17, 0),
                 "flight_time": 120,
                 "flight_id": 8,
                 "business_class_seat_size": 10,

@@ -254,3 +254,6 @@ def get_max_seat(flight_id):
         Airplane.id == Flight.airplane_id
     ).first()
 
+def revenue_stats():
+    return db.session.query(FlightRoute.id, FlightRoute.dep_airports.province)
+

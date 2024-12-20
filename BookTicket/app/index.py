@@ -178,8 +178,6 @@ def book_tickets():
     )
 
 
-from datetime import datetime
-
 
 def add_customer():
     # Xử lý từng hành khách
@@ -249,7 +247,7 @@ def add_ticket(customer, seat_code):
     db.session.add(ticket)
     db.session.commit()
 
-def create_receipt(user_id, total, ticket_ids):
+def create_receipt(user_id, total, flight_route_id, ticket_count):
     # Tạo Receipt
     receipt = Receipt(
         user_id=user_id,
@@ -258,40 +256,32 @@ def create_receipt(user_id, total, ticket_ids):
     db.session.add(receipt)
     db.session.commit()  # Lưu Receipt vào DB để lấy ID
 
-    # Tạo ReceiptDetail cho từng Ticket ID
-    for ticket_id in ticket_ids:
-        receipt_detail = ReceiptDetail(
-            quantity=1,  # Mặc định 1 vé tương ứng 1 ReceiptDetail
-            unit_price=total // len(ticket_ids),  # Giá vé chia đều (nếu có nhiều vé)
-            ticket_id=ticket_id,
-            receipt_id=receipt.id
-        )
-        db.session.add(receipt_detail)
+    # Tạo ReceiptDetail với số lượng vé
+    receipt_detail = ReceiptDetail(
+        quantity=ticket_count,  # Số lượng vé được đặt
+        unit_price=total // ticket_count if ticket_count > 0 else total,  # Giá mỗi vé
+        receipt_id=receipt.id,
+        flight_route_id=flight_route_id  # Liên kết với flight_route_id
+    )
+    db.session.add(receipt_detail)
 
     db.session.commit()  # Lưu ReceiptDetail vào DB
     return receipt
 
 
+
 @app.route('/add_data', methods=['POST'])
 def add_data():
-    # Xử lý thông tin hành khách và vé
+    # Xử lý thông tin hành khách
     add_customer()
 
-    passengers = []  # Lưu thông tin hành khách
-    ticket_ids = []  # Lưu danh sách Ticket ID cho ReceiptDetail
-    for p in range(int(request.form.get('passenger_count'))):
-        name = request.form.get(f'passenger_name_{p}')
-        seat_code = request.form.get(f'seat_{p}')
+    # Lấy thông tin chuyến bay và tuyến bay
+    flight_id = request.form.get('flight_id')  # Lấy ID chuyến bay
+    flight = dao.get_flight_by_id(flight_id)  # Tìm chuyến bay trong DB
+    if not flight:
+        raise ValueError("Flight not found.")  # Xử lý nếu không tìm thấy chuyến bay
 
-        # Lấy Ticket ID đã được tạo
-        ticket = db.session.query(Ticket).join(SeatAssignment).join(Seat).filter(
-            Seat.seat_code == seat_code
-        ).first()
-
-        if ticket:
-            ticket_ids.append(ticket.id)
-
-        passengers.append({'name': name, 'seat_code': seat_code})
+    flight_route_id = flight.flight_route_id  # Lấy flight_route_id từ chuyến bay
 
     # Lấy tổng tiền từ form và xử lý
     total_str = request.form.get('total')  # Giá trị từ form
@@ -299,21 +289,30 @@ def add_data():
 
     user_id = current_user.id  # ID người dùng đã đăng nhập
 
-    # Tạo hóa đơn và chi tiết hóa đơn
-    receipt = create_receipt(user_id, total, ticket_ids)
+    # Đếm số vé (hành khách)
+    ticket_count = int(request.form.get('passenger_count'))
 
-    # Lấy thông tin chuyến bay
-    flight_id = request.form.get('flight_id')
-    flight = dao.get_flight_by_id(flight_id)
+    # Tạo hóa đơn và chi tiết hóa đơn
+    receipt = create_receipt(user_id, total, flight_route_id, ticket_count)
+
+    # Lấy thông tin thời gian bay
     departure_date = request.form.get('departure_date')
     departure_time = request.form.get('departure_time')
     arrival_time = request.form.get('arrival_time')
+
+    # Tạo danh sách hành khách để hiển thị trên hóa đơn
+    passengers = []
+    for p in range(ticket_count):
+        name = request.form.get(f'passenger_name_{p}')
+        seat_code = request.form.get(f'seat_{p}')
+        passengers.append({'name': name, 'seat_code': seat_code})
 
     # Render hóa đơn
     return render_template('receipt.html', passengers=passengers,
                            flight=flight, departure_date=departure_date,
                            departure_time=departure_time, arrival_time=arrival_time,
                            total=total, receipt=receipt)
+
 
 
 @app.route('/api/schedule', methods=['GET', 'POST'])
