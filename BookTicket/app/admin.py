@@ -44,7 +44,8 @@ class LogoutView(MyView):
 class StatsView(MyView):
     @expose("/")
     def __index__(self):
-        return self.render("admin/stats.html", stats=dao.revenue_stats())
+        return self.render("admin/stats.html", stats=dao.revenue_stats(),
+                           stats_month=dao.revenue_month(), stats_year=dao.revenue_year())
 
 
 admin = Admin(app, name='bookticket', template_mode='bootstrap4')
