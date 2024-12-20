@@ -1,5 +1,5 @@
 from flask_sqlalchemy.model import Model
-from app import db, app
+from app import db, app, dao
 from flask_admin import Admin, BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from app.models import Flight, FlightRoute, User, UserRole, Policy
@@ -44,7 +44,7 @@ class LogoutView(MyView):
 class StatsView(MyView):
     @expose("/")
     def __index__(self):
-        return self.render("admin/stats.html")
+        return self.render("admin/stats.html", stats=dao.revenue_stats())
 
 
 admin = Admin(app, name='bookticket', template_mode='bootstrap4')

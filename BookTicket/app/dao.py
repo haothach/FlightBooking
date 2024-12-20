@@ -1,7 +1,7 @@
 import datetime
 
 from app.models import User, Province, Airport, Flight, FlightRoute, FlightSchedule, TicketClass, Seat, SeatAssignment, \
-    Airplane, IntermediateAirport
+    Airplane, IntermediateAirport, Receipt, ReceiptDetail
 from app import app, db
 import hashlib
 import cloudinary.uploader
@@ -254,6 +254,35 @@ def get_max_seat(flight_id):
         Airplane.id == Flight.airplane_id
     ).first()
 
-def revenue_stats():
-    return db.session.query(FlightRoute.id, FlightRoute.dep_airports.province)
+from sqlalchemy.orm import aliased
 
+def revenue_stats():
+    # Alias cho bảng Airport và Province
+    dep_airport = aliased(Airport)  # Sân bay đi
+    des_airport = aliased(Airport)  # Sân bay đến
+    dep_province = aliased(Province)  # Tỉnh nơi đi
+    des_province = aliased(Province)  # Tỉnh nơi đến
+
+    return (db.session.query(
+                FlightRoute.id.label('flight_route_id'),
+                func.sum(ReceiptDetail.quantity * ReceiptDetail.unit_price).label('revenue'),  # Tổng doanh thu
+                dep_province.name.label('departure_province'),  # Tỉnh nơi đi
+                des_province.name.label('destination_province')  # Tỉnh nơi đến
+            )
+            .join(ReceiptDetail, ReceiptDetail.flight_route_id == FlightRoute.id)  # Join ReceiptDetail với FlightRoute
+            .join(dep_airport, dep_airport.id == FlightRoute.dep_airport_id)  # Join sân bay đi
+            .join(dep_province, dep_province.id == dep_airport.province_id)  # Join tỉnh nơi đi
+            .join(des_airport, des_airport.id == FlightRoute.des_airport_id)  # Join sân bay đến
+            .join(des_province, des_province.id == des_airport.province_id)  # Join tỉnh nơi đến
+            .group_by(
+                FlightRoute.id,  # Nhóm theo ID tuyến bay
+                dep_province.name,  # Nhóm theo tên tỉnh nơi đi
+                des_province.name  # Nhóm theo tên tỉnh nơi đến
+            )
+            .all())
+
+
+
+if __name__ == '__main__':
+    with app.app_context():
+        print(revenue_stats())
