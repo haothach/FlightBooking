@@ -121,6 +121,19 @@ def login_admin_view():
 def staff_view():
     return render_template("staff.html")
 
+@app.route('/submit-contact', methods=['POST'])
+def submit_contact():
+    name = request.form.get('name')
+    email = request.form.get('email')
+    message = request.form.get('message')
+    # Gửi thông báo thành công
+    flash('Yêu cầu hỗ trợ của bạn đã được gửi thành công!', 'success')
+    return redirect('/contact')
+
+@app.route('/contact')
+def contact_view():
+    return render_template('contact.html')
+
 @app.route('/logout')
 def logout_process():
     logout_user()
