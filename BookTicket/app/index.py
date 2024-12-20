@@ -96,7 +96,8 @@ def login_view():
             login_user(user=user)
             if user.user_role == UserRole.ADMIN:
                 return redirect('/admin')
-
+            elif user.user_role == UserRole.STAFF:
+                return redirect('/staff')
             next_url = request.form.get('next')
             # Xử lý nếu next_url không tồn tại hoặc không hợp lệ
             if not next_url or next_url == '/':
@@ -116,6 +117,9 @@ def login_admin_view():
         login_user(user)
     return redirect('/admin')
 
+@app.route("/staff")
+def staff_view():
+    return render_template("staff.html")
 
 @app.route('/logout')
 def logout_process():

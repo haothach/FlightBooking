@@ -393,10 +393,14 @@ if __name__ == '__main__':
         # Thêm vào session và commit
         db.session.add(new_policy)
 
-        u = User(name="admin", username="admin", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
-                 avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1731852091/cld-sample-5.jpg",
-                 user_role=UserRole.ADMIN)
-        db.session.add(u)
+        u1 = User(name="admin", username="admin", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+                  avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1731852091/cld-sample-5.jpg",
+                  user_role=UserRole.ADMIN)
+        u2 = User(name="staff", username="staff", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+                  avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1731852091/cld-sample-5.jpg",
+                  user_role=UserRole.STAFF)
+        db.session.add(u1)
+        db.session.add(u2)
         db.session.commit()
         provinces = [
             {"name": "TP HCM"},
