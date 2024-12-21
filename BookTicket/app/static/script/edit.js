@@ -51,7 +51,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 })
-
     // Logic hiệu ứng thông báo
 //    const alerts = document.querySelectorAll('.alert');
 //    if (alerts.length > 0) {

@@ -1,7 +1,7 @@
 import datetime
 
 from app.models import User, Province, Airport, Flight, FlightRoute, FlightSchedule, TicketClass, Seat, SeatAssignment, \
-    Airplane, IntermediateAirport
+    Airplane, IntermediateAirport, Receipt, ReceiptDetail
 from app import app, db
 import hashlib
 import cloudinary.uploader
@@ -21,7 +21,9 @@ def load_airport():
 
 
 def load_flight():
-    return Flight.query.order_by('id').all()
+    flights = Flight.query.all()  # Lấy tất cả các chuyến bay
+    flight_codes = {flight.flight_code for flight in flights}  # Dùng set để lấy các mã chuyến bay duy nhất
+    return sorted(flight_codes)  # Sắp xếp theo thứ tự
 
 
 def load_ariplane():
@@ -174,7 +176,8 @@ def load_flights(departure, destination, departure_date):
         FlightSchedule.flight_time,
         Airplane.name,
         Airplane.airplane_type,
-        Flight.id
+        Flight.id,
+        FlightSchedule.id
     )
 
     # Thực thi truy vấn
@@ -257,3 +260,40 @@ def get_max_seat(airplane_id):
         Airplane.id == airplane_id
     ).first()
 
+
+def revenue_stats():
+    # Alias cho bảng Airport và Province
+    dep_airport = aliased(Airport)  # Sân bay đi
+    des_airport = aliased(Airport)  # Sân bay đến
+    dep_province = aliased(Province)  # Tỉnh nơi đi
+    des_province = aliased(Province)  # Tỉnh nơi đến
+
+    return (db.session.query(
+                FlightRoute.id.label('flight_route_id'),
+                func.sum(ReceiptDetail.quantity * ReceiptDetail.unit_price).label('revenue'),  # Tổng doanh thu
+                dep_province.name.label('departure_province'),  # Tỉnh nơi đi
+                des_province.name.label('destination_province')  # Tỉnh nơi đến
+            )
+            .join(ReceiptDetail, ReceiptDetail.flight_route_id == FlightRoute.id)  # Join ReceiptDetail với FlightRoute
+            .join(dep_airport, dep_airport.id == FlightRoute.dep_airport_id)  # Join sân bay đi
+            .join(dep_province, dep_province.id == dep_airport.province_id)  # Join tỉnh nơi đi
+            .join(des_airport, des_airport.id == FlightRoute.des_airport_id)  # Join sân bay đến
+            .join(des_province, des_province.id == des_airport.province_id)  # Join tỉnh nơi đến
+            .group_by(
+                FlightRoute.id,  # Nhóm theo ID tuyến bay
+                dep_province.name,  # Nhóm theo tên tỉnh nơi đi
+                des_province.name  # Nhóm theo tên tỉnh nơi đến
+            )
+            .all())
+
+
+def find_flight_route(dep_id,des_id):
+    return FlightRoute.query.filter_by(
+        dep_airport_id=dep_id,
+        des_airport_id=des_id
+    ).first()
+
+
+if __name__ == '__main__':
+    with app.app_context():
+        print(load_flight())

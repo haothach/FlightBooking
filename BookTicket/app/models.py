@@ -8,7 +8,7 @@ from enum import Enum as RoleEnum
 from enum import Enum as AirlineEnum
 from enum import Enum as TicketClassEnum
 from enum import Enum as GenderEnum
-import datetime
+from datetime import datetime
 from flask_login import UserMixin
 import math
 
@@ -92,20 +92,7 @@ class FlightRoute(BaseModel):
     des_airport_id = Column(Integer, ForeignKey(Airport.id), nullable=False)
 
     flights = relationship('Flight', backref='flight_route', lazy=True)
-
-    @validates('dep_airport_id', 'des_airport_id')
-    def validate_airports_and_duplicates(self, key, value):
-        # Nếu kiểm tra 'des_airport_id', đảm bảo sân bay đi và đến không trùng nhau
-        if key == 'des_airport_id' and value == self.dep_airport_id:
-            raise ValueError("Departure and destination airports must be different.")
-        # Kiểm tra trùng lặp tuyến bay
-        existing_route = FlightRoute.query.filter_by(
-            dep_airport_id=self.dep_airport_id if key != 'dep_airport_id' else value,
-            des_airport_id=self.des_airport_id if key != 'des_airport_id' else value
-        ).first()
-        if existing_route and existing_route.id != self.id:
-            raise ValueError("This flight route already exists.")
-        return value
+    receipt_details = relationship('ReceiptDetail', backref='flight_route', lazy=True)
 
     def __str__(self):
         dep_airport_name = self.dep_airport.name
@@ -163,13 +150,18 @@ class Airplane(BaseModel):
 
 
 class Flight(BaseModel):
-    flight_code = Column(String(20), nullable=False, unique=True)
+    flight_code = Column(String(20), nullable=False)
     flight_route_id = Column(Integer, ForeignKey(FlightRoute.id), nullable=False)
     airplane_id = Column(Integer, ForeignKey(Airplane.id), nullable=False)
 
-    # flight_schedules = relationship('FlightSchedule', backref='flight', lazy=True)
+    # Quan hệ
     inter_airports = relationship('IntermediateAirport', backref='flight', lazy=True)
     flight_schedules = relationship('FlightSchedule', backref='flight', lazy=True)
+
+    # Đảm bảo flight_code là duy nhất khi kết hợp với flight_route_id
+    __table_args__ = (
+        UniqueConstraint('flight_code', 'flight_route_id', name='uix_flight_code_route'),
+    )
 
     def __str__(self):
         return self.flight_code
@@ -207,12 +199,12 @@ class FlightSchedule(BaseModel):
         # Kiểm tra số lượng ghế hạng business và economy không vượt quá khả năng của máy bay
         if self.business_class_seat_size > airplane.business_class_seat_size:
             raise ValueError(
-                f"Business class seat size cannot exceed the airplane's business capacity ({airplane.business_class_seat_size})."
+                f"Số ghế hạng thương gia không được nhỏ hơn số lượng quy định ({airplane.business_class_seat_size})."
             )
 
         if self.economy_class_seat_size > airplane.economy_class_seat_size:
             raise ValueError(
-                f"economy class seat size cannot exceed the airplane's economy capacity ({airplane.economy_class_seat_size})."
+                f"Số ghế hạng phổ thông không được nhỏ hơn số lượng quy định ({airplane.economy_class_seat_size})."
             )
 
         policy = db.session.query(Policy).first()
@@ -222,18 +214,18 @@ class FlightSchedule(BaseModel):
         # Kiểm soát flight_time
         if self.flight_time < policy.minimun_flight_time:
             raise ValueError(
-                f"Flight time must be at least {policy.minimun_flight_time} minutes. Provided: {self.flight_time} minutes."
+                f"Thời gian bay phải ít nhất {policy.minimun_flight_time} minutes."
             )
 
         #Kiểm soát giá vé
         if self.business_class_price < policy.ticket_price:
             raise ValueError(
-                f"Business class price cannot be less than the policy ticket price ({policy.ticket_price}). Provided: {self.business_class_price}."
+                f"Giá vé hạng thương gia không được nhỏ hơn ({policy.ticket_price})."
             )
 
         if self.economy_class_price < policy.ticket_price:
             raise ValueError(
-                f"economy class price cannot be less than the policy ticket price ({policy.ticket_price}). Provided: {self.economy_class_price}."
+                f"Giá vé hạng phổ thông không được nhỏ hơn({policy.ticket_price})."
             )
 
     def create_seat_assignments(self):
@@ -245,7 +237,7 @@ class FlightSchedule(BaseModel):
 
         # Kiểm tra nếu không tìm thấy Flight, thoát ra
         if not flight:
-            print(f"Flight with id {self.flight_id} not found.")
+            print(f"Không tìm thấy chuyến bay nào có id là : {self.flight_id} .")
             return
 
         # Lấy danh sách ghế business và economy với số lượng giới hạn theo yêu cầu
@@ -337,13 +329,13 @@ class IntermediateAirport(db.Model):
 
 
 class Ticket(BaseModel):
-    date_created = Column(DateTime, default=datetime.datetime.utcnow)
+    date_created = Column(DateTime, default=datetime.now())
 
     seat_assignment_id = Column(Integer, ForeignKey(SeatAssignment.id), nullable=False)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
     customer_id = Column(Integer, ForeignKey(Customer.id), nullable=False)
 
-    receipt_details = relationship('ReceiptDetail', backref='ticket', lazy=True)
+
 
 
 class Policy(BaseModel):
@@ -360,7 +352,8 @@ class Policy(BaseModel):
 
 class Receipt(BaseModel):
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
-    created_date = Column(DateTime, default=datetime.datetime.utcnow)
+    total = Column(Integer, nullable=False)
+    created_date = Column(DateTime, default=datetime.now())
 
     receipt_details = relationship('ReceiptDetail', backref='receipt', lazy=True)
 
@@ -368,252 +361,253 @@ class Receipt(BaseModel):
 class ReceiptDetail(BaseModel):
     quantity = Column(Integer, default=0)
     unit_price = Column(Integer, default=0)
-    ticket_id = Column(Integer, ForeignKey(Ticket.id), nullable=False)
     receipt_id = Column(Integer, ForeignKey(Receipt.id), nullable=False)
+
+    flight_route_id = Column(Integer, ForeignKey(FlightRoute.id), nullable=False)
 
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
 
-        # new_policy = Policy(
-        #     number_airport=10,  # Số lượng sân bay tối đa
-        #     minimun_flight_time=30,  # Thời gian bay tối thiểu 30 phút
-        #     max_inter_airport=2,  # Số sân bay trung gian tối đa
-        #     minimum_stop_time=20,  # Thời gian dừng tối thiểu tại sân bay trung gian
-        #     maximum_stop_time=30,  # Thời gian dừng tối đa tại sân bay trung gian
-        #     number_ticket_class=2,  # Số hạng vé (2 hạng vé)
-        #     ticket_price=1000,  # Giá vé (ví dụ: 1000 là đơn vị tiền tệ)
-        #     ticket_sell_time=1440,  # Thời gian bán vé (ví dụ: 1440 phút = 1 ngày)
-        #     ticket_booking_time=240,  # Thời gian đặt vé (ví dụ: 240 phút = 4 giờ trước khi chuyến bay)
-        # )
-        # # Thêm vào session và commit
-        # db.session.add(new_policy)
-        #
-        # u = User(name="admin", username="admin", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
-        #          avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1731852091/cld-sample-5.jpg",
-        #          user_role=UserRole.ADMIN)
-        # db.session.add(u)
-        # db.session.commit()
-        # provinces = [
-        #     {"name": "TP HCM"},
-        #     {"name": "Hà Nội"},
-        #     {"name": "Đà Nẵng" },
-        #     {"name": "Nghệ An"},
-        #     {"name": "Cần Thơ"},
-        #     {"name": "Hải Phòng"},
-        #     {"name": "Đà Lạt"},
-        #     {"name": "Quảng Ninh"},
-        #     {"name": "Khánh Hòa"},
-        #     {"name": "Bình Dương"}
-        # ]
-        #
-        # for p in provinces:
-        #     p = Province(**p)
-        #     db.session.add(p)
-        # db.session.commit()
-        #
-        # airports = [
-        #     {"name": "Tân Sơn Nhất", "add": "Phường 2, 4 và 15, Quận Tân Bình", "province_id": 1},
-        #     {"name": "Nội Bài", "add": "Số 200 đường Phạm Văn Đồng, Hà Nội", "province_id": 2},
-        #     {"name": "Đà Nẵng", "add": "Số 02 đường Duy Tân, Quận Hải Châu, Đà Nẵng", "province_id": 3},
-        #     {"name": "Vinh", "add": "Số 1 đường Nguyễn Sỹ Sách, TP Vinh, Nghệ An", "province_id": 4},
-        #     {"name": "Cần Thơ", "add": "Số 60 đường Mậu Thân, Cần Thơ", "province_id": 5},
-        #     {"name": "Cát Bì", "add": "Số 15 đường Nguyễn Đức Cảnh, Hải Phòng", "province_id": 6},
-        #     {"name": "Liên Khương", "add": "Xã Liên Nghĩa, Huyện Đức Trọng, Lâm Đồng", "province_id": 7},
-        #     {"name": "Vân Đồn", "add": "Số 28 đường Vân Đồn, Quảng Ninh", "province_id": 8},
-        #     {"name": "Long Thành", "add": "Xã Long Thanh, Huyện Long Thành, tỉnh Đồng Nai", "province_id": 9},
-        # ]
-        #
-        # for a in airports:
-        #     a = Airport(**a)
-        #     db.session.add(a)
-        #
-        # # Chuyển đổi dữ liệu từ danh sách airplanes thành các đối tượng Airplane
-        # airplanes = [
-        #     {
-        #         "name": "Airbus A320",
-        #         "airplane_type": Airline.VietNam_Airline,
-        #         "business_class_seat_size": 5 * 4,  # 5 hàng * 4 ghế/hàng
-        #         "economy_class_seat_size": 10 * 6,  # 20 hàng * 6 ghế/hàng
-        #     },
-        #     {
-        #         "name": "Boeing 787",
-        #         "airplane_type": Airline.Bamboo_AirWays,
-        #         "business_class_seat_size": 5 * 5,
-        #         "economy_class_seat_size": 10 * 7,
-        #     },
-        #     {
-        #         "name": "Airbus A321",
-        #         "airplane_type": Airline.Vietjet_Air,
-        #         "business_class_seat_size": 6 * 4,
-        #         "economy_class_seat_size": 14 * 6,
-        #     },
-        #     {
-        #         "name": "Boeing 737",
-        #         "airplane_type": Airline.VietNam_Airline,
-        #         "business_class_seat_size": 4 * 4,
-        #         "economy_class_seat_size": 10 * 6,
-        #     },
-        #     {
-        #         "name": "Airbus A380",
-        #         "airplane_type": Airline.Bamboo_AirWays,
-        #         "business_class_seat_size": 5 * 6,
-        #         "economy_class_seat_size": 8 * 8,
-        #     },
-        #     {
-        #         "name": "Boeing 777",
-        #         "airplane_type": Airline.VietNam_Airline,
-        #         "business_class_seat_size": 5 * 5,
-        #         "economy_class_seat_size": 7 * 7,
-        #     },
-        #     {
-        #         "name": "Embraer E195",
-        #         "airplane_type": Airline.Vietjet_Air,
-        #         "business_class_seat_size": 5 * 4,
-        #         "economy_class_seat_size": 8 * 6,
-        #     }
-        # ]
-        #
-        # for ap in airplanes:
-        #     # Tạo đối tượng Airplane
-        #     airplane = Airplane(**ap)
-        #
-        #     # Thêm vào session và commit để lấy `id`
-        #     db.session.add(airplane)
-        #     db.session.commit()
-        #
-        #     # Gọi hàm generate_seats sau khi `id` đã được gán
-        #     airplane.generate_seats()
-        #
-        # flight_routes = [
-        #     {"dep_airport_id": 1, "des_airport_id": 2},  # Tuyến bay từ Tân Sơn Nhất đến Nội Bài
-        #     {"dep_airport_id": 2, "des_airport_id": 3},  # Tuyến bay từ Nội Bài đến Đà Nẵng
-        #     {"dep_airport_id": 3, "des_airport_id": 4},  # Tuyến bay từ Đà Nẵng đến Vinh
-        #     {"dep_airport_id": 4, "des_airport_id": 5},  # Tuyến bay từ Vinh đến Cần Thơ
-        #     {"dep_airport_id": 1, "des_airport_id": 6},  # Tuyến bay từ Tân Sơn Nhất đến Hải Phòng
-        #     {"dep_airport_id": 6, "des_airport_id": 7},  # Tuyến bay từ Hải Phòng đến Đà Lạt
-        #     {"dep_airport_id": 7, "des_airport_id": 8},  # Tuyến bay từ Đà Lạt đến Quảng Ninh
-        #     {"dep_airport_id": 8, "des_airport_id": 1}  # Tuyến bay từ Quảng Ninh về Tân Sơn Nhất
-        # ]
-        #
-        # for route in flight_routes:
-        #     flight_route = FlightRoute(**route)
-        #     db.session.add(flight_route)
-        #
-        # # Thêm dữ liệu vào bảng Flight
-        # flights = [
-        #     {"flight_code": "VN123", "flight_route_id": 1, "airplane_id": 1},
-        #     {"flight_code": "VJ456", "flight_route_id": 2, "airplane_id": 2},
-        #     {"flight_code": "BB789", "flight_route_id": 3, "airplane_id": 3},
-        #     {"flight_code": "VN101", "flight_route_id": 4, "airplane_id": 4},
-        #     {"flight_code": "BB202", "flight_route_id": 5, "airplane_id": 5},
-        #     {"flight_code": "VJ303", "flight_route_id": 1, "airplane_id": 6},
-        #     {"flight_code": "BB57O", "flight_route_id": 1, "airplane_id": 7},
-        #     {"flight_code": "A9125", "flight_route_id": 1, "airplane_id": 2}
-        # ]
-        #
-        # for flight in flights:
-        #     f = Flight(**flight)
-        #     db.session.add(f)
-        #
-        # # Thêm dữ liệu vào bảng FlightSchedule
-        #
-        # flight_schedules = [
-        #     {
-        #         "dep_time": datetime.datetime(2024, 12, 10, 8, 30),
-        #         "flight_time": 120,
-        #         "flight_id": 1,
-        #         "business_class_seat_size": 15,
-        #         "economy_class_seat_size": 55,
-        #         "business_class_price": 1800000,  # Giá business cao hơn economy
-        #         "economy_class_price": 1500000
-        #     },
-        #     {
-        #         "dep_time": datetime.datetime(2024, 12, 10, 10, 0),
-        #         "flight_time": 90,
-        #         "flight_id": 2,
-        #         "business_class_seat_size": 25,
-        #         "economy_class_seat_size": 60,
-        #         "business_class_price": 3300000,  # Giá business cao hơn economy
-        #         "economy_class_price": 3000000
-        #     },
-        #     {
-        #         "dep_time": datetime.datetime(2024, 12, 10, 12, 0),
-        #         "flight_time": 80,
-        #         "flight_id": 3,
-        #         "business_class_seat_size": 20,
-        #         "economy_class_seat_size": 70,
-        #         "business_class_price": 1800000,  # Giá business cao hơn economy
-        #         "economy_class_price": 1500000
-        #     },
-        #     {
-        #         "dep_time": datetime.datetime(2024, 12, 10, 15, 0),
-        #         "flight_time": 100,
-        #         "flight_id": 4,
-        #         "business_class_seat_size": 15,
-        #         "economy_class_seat_size": 50,
-        #         "business_class_price": 2200000,  # Giá business cao hơn economy
-        #         "economy_class_price": 2000000
-        #     },
-        #     {
-        #         "dep_time": datetime.datetime(2024, 12, 11, 8, 0),
-        #         "flight_time": 130,
-        #         "flight_id": 5,
-        #         "business_class_seat_size": 30,
-        #         "economy_class_seat_size": 60,
-        #         "business_class_price": 6000000,  # Giá business cao hơn economy
-        #         "economy_class_price": 5500000
-        #     },
-        #     {
-        #         "dep_time": datetime.datetime(2024, 12, 10, 14, 0),
-        #         "flight_time": 95,
-        #         "flight_id": 6,
-        #         "business_class_seat_size": 20,
-        #         "economy_class_seat_size": 45,
-        #         "business_class_price": 1800000,  # Giá business cao hơn economy
-        #         "economy_class_price": 1500000
-        #     },
-        #     {
-        #         "dep_time": datetime.datetime(2024, 12, 10, 10, 30),
-        #         "flight_time": 115,
-        #         "flight_id": 7,
-        #         "business_class_seat_size": 15,
-        #         "economy_class_seat_size": 45,
-        #         "business_class_price": 1800000,  # Giá business cao hơn economy
-        #         "economy_class_price": 1500000
-        #     },
-        #     {
-        #         "dep_time": datetime.datetime(2024, 12, 12, 17, 0),
-        #         "flight_time": 120,
-        #         "flight_id": 8,
-        #         "business_class_seat_size": 10,
-        #         "economy_class_seat_size": 55,
-        #         "business_class_price": 1800000,  # Giá business cao hơn economy
-        #         "economy_class_price": 1500000
-        #     }
-        # ]
-        #
-        # for schedule in flight_schedules:
-        #     flight_schedule = FlightSchedule(**schedule)
-        #     db.session.add(flight_schedule)
-        #     flight_schedule.create_seat_assignments()
-        #
-        # # Thêm dữ liệu vào bảng IntermediateAirport
-        # intermediate_airports = [
-        #     {"airport_id": 3, "flight_id": 1, "stop_time": 30, "note": "Dừng đón khách"},
-        #     # Dừng trung gian tại Đà Nẵng trong tuyến Tân Sơn Nhất - Nội Bài
-        #     {"airport_id": 4, "flight_id": 2, "stop_time": 25, "note": "Chờ tiếp nhiên liệu"},
-        #     # Dừng trung gian tại Vinh trong tuyến Nội Bài - Đà Nẵng
-        #     {"airport_id": 2, "flight_id": 3, "stop_time": 20, "note": "Kiểm tra kỹ thuật"},
-        #     # Dừng trung gian tại Nội Bài trong tuyến Đà Nẵng - Vinh
-        #     {"airport_id": 1, "flight_id": 4, "stop_time": 25, "note": "Thay đổi phi hành đoàn"},
-        #     # Dừng trung gian tại Tân Sơn Nhất trong tuyến Vinh - Cần Thơ
-        #     {"airport_id": 2, "flight_id": 4, "stop_time": 25, "note": "Thay đổi phi hành đoàn"}
-        # ]
-        #
-        # for intermediate in intermediate_airports:
-        #     inter_airport = IntermediateAirport(**intermediate)
-        #     db.session.add(inter_airport)
-        #
-        # db.session.commit()
+        new_policy = Policy(
+            number_airport=10,  # Số lượng sân bay tối đa
+            minimun_flight_time=30,  # Thời gian bay tối thiểu 30 phút
+            max_inter_airport=2,  # Số sân bay trung gian tối đa
+            minimum_stop_time=20,  # Thời gian dừng tối thiểu tại sân bay trung gian
+            maximum_stop_time=30,  # Thời gian dừng tối đa tại sân bay trung gian
+            number_ticket_class=2,  # Số hạng vé (2 hạng vé)
+            ticket_price=1000,  # Giá vé (ví dụ: 1000 là đơn vị tiền tệ)
+            ticket_sell_time=1440,  # Thời gian bán vé (ví dụ: 1440 phút = 1 ngày)
+            ticket_booking_time=240,  # Thời gian đặt vé (ví dụ: 240 phút = 4 giờ trước khi chuyến bay)
+        )
+        # Thêm vào session và commit
+        db.session.add(new_policy)
+
+        u = User(name="admin", username="admin", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+                 avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1731852091/cld-sample-5.jpg",
+                 user_role=UserRole.ADMIN)
+        db.session.add(u)
+        db.session.commit()
+        provinces = [
+            {"name": "TP HCM"},
+            {"name": "Hà Nội"},
+            {"name": "Đà Nẵng" },
+            {"name": "Nghệ An"},
+            {"name": "Cần Thơ"},
+            {"name": "Hải Phòng"},
+            {"name": "Đà Lạt"},
+            {"name": "Quảng Ninh"},
+            {"name": "Khánh Hòa"},
+            {"name": "Bình Dương"}
+        ]
+
+        for p in provinces:
+            p = Province(**p)
+            db.session.add(p)
+        db.session.commit()
+
+        airports = [
+            {"name": "Tân Sơn Nhất", "add": "Phường 2, 4 và 15, Quận Tân Bình", "province_id": 1},
+            {"name": "Nội Bài", "add": "Số 200 đường Phạm Văn Đồng, Hà Nội", "province_id": 2},
+            {"name": "Đà Nẵng", "add": "Số 02 đường Duy Tân, Quận Hải Châu, Đà Nẵng", "province_id": 3},
+            {"name": "Vinh", "add": "Số 1 đường Nguyễn Sỹ Sách, TP Vinh, Nghệ An", "province_id": 4},
+            {"name": "Cần Thơ", "add": "Số 60 đường Mậu Thân, Cần Thơ", "province_id": 5},
+            {"name": "Cát Bì", "add": "Số 15 đường Nguyễn Đức Cảnh, Hải Phòng", "province_id": 6},
+            {"name": "Liên Khương", "add": "Xã Liên Nghĩa, Huyện Đức Trọng, Lâm Đồng", "province_id": 7},
+            {"name": "Vân Đồn", "add": "Số 28 đường Vân Đồn, Quảng Ninh", "province_id": 8},
+            {"name": "Long Thành", "add": "Xã Long Thanh, Huyện Long Thành, tỉnh Đồng Nai", "province_id": 9},
+        ]
+
+        for a in airports:
+            a = Airport(**a)
+            db.session.add(a)
+
+        # Chuyển đổi dữ liệu từ danh sách airplanes thành các đối tượng Airplane
+        airplanes = [
+            {
+                "name": "Airbus A320",
+                "airplane_type": Airline.VietNam_Airline,
+                "business_class_seat_size": 5 * 4,  # 5 hàng * 4 ghế/hàng
+                "economy_class_seat_size": 10 * 6,  # 20 hàng * 6 ghế/hàng
+            },
+            {
+                "name": "Boeing 787",
+                "airplane_type": Airline.Bamboo_AirWays,
+                "business_class_seat_size": 5 * 5,
+                "economy_class_seat_size": 10 * 7,
+            },
+            {
+                "name": "Airbus A321",
+                "airplane_type": Airline.Vietjet_Air,
+                "business_class_seat_size": 6 * 4,
+                "economy_class_seat_size": 14 * 6,
+            },
+            {
+                "name": "Boeing 737",
+                "airplane_type": Airline.VietNam_Airline,
+                "business_class_seat_size": 4 * 4,
+                "economy_class_seat_size": 10 * 6,
+            },
+            {
+                "name": "Airbus A380",
+                "airplane_type": Airline.Bamboo_AirWays,
+                "business_class_seat_size": 5 * 6,
+                "economy_class_seat_size": 8 * 8,
+            },
+            {
+                "name": "Boeing 777",
+                "airplane_type": Airline.VietNam_Airline,
+                "business_class_seat_size": 5 * 5,
+                "economy_class_seat_size": 7 * 7,
+            },
+            {
+                "name": "Embraer E195",
+                "airplane_type": Airline.Vietjet_Air,
+                "business_class_seat_size": 5 * 4,
+                "economy_class_seat_size": 8 * 6,
+            }
+        ]
+
+        for ap in airplanes:
+            # Tạo đối tượng Airplane
+            airplane = Airplane(**ap)
+
+            # Thêm vào session và commit để lấy `id`
+            db.session.add(airplane)
+            db.session.commit()
+
+            # Gọi hàm generate_seats sau khi `id` đã được gán
+            airplane.generate_seats()
+
+        flight_routes = [
+            {"dep_airport_id": 1, "des_airport_id": 2},  # Tuyến bay từ Tân Sơn Nhất đến Nội Bài
+            {"dep_airport_id": 2, "des_airport_id": 3},  # Tuyến bay từ Nội Bài đến Đà Nẵng
+            {"dep_airport_id": 3, "des_airport_id": 4},  # Tuyến bay từ Đà Nẵng đến Vinh
+            {"dep_airport_id": 4, "des_airport_id": 5},  # Tuyến bay từ Vinh đến Cần Thơ
+            {"dep_airport_id": 1, "des_airport_id": 6},  # Tuyến bay từ Tân Sơn Nhất đến Hải Phòng
+            {"dep_airport_id": 6, "des_airport_id": 7},  # Tuyến bay từ Hải Phòng đến Đà Lạt
+            {"dep_airport_id": 7, "des_airport_id": 8},  # Tuyến bay từ Đà Lạt đến Quảng Ninh
+            {"dep_airport_id": 8, "des_airport_id": 1}  # Tuyến bay từ Quảng Ninh về Tân Sơn Nhất
+        ]
+
+        for route in flight_routes:
+            flight_route = FlightRoute(**route)
+            db.session.add(flight_route)
+
+        # Thêm dữ liệu vào bảng Flight
+        flights = [
+            {"flight_code": "VN123", "flight_route_id": 1, "airplane_id": 1},
+            {"flight_code": "VJ456", "flight_route_id": 2, "airplane_id": 2},
+            {"flight_code": "BB789", "flight_route_id": 3, "airplane_id": 3},
+            {"flight_code": "VN101", "flight_route_id": 4, "airplane_id": 4},
+            {"flight_code": "BB202", "flight_route_id": 5, "airplane_id": 5},
+            {"flight_code": "VJ303", "flight_route_id": 1, "airplane_id": 6},
+            {"flight_code": "BB57O", "flight_route_id": 1, "airplane_id": 7},
+            {"flight_code": "A9125", "flight_route_id": 1, "airplane_id": 2}
+        ]
+
+        for flight in flights:
+            f = Flight(**flight)
+            db.session.add(f)
+
+        # Thêm dữ liệu vào bảng FlightSchedule
+
+        flight_schedules = [
+            {
+                "dep_time": datetime(2024, 12, 10, 8, 30),
+                "flight_time": 120,
+                "flight_id": 1,
+                "business_class_seat_size": 15,
+                "economy_class_seat_size": 55,
+                "business_class_price": 1800000,  # Giá business cao hơn economy
+                "economy_class_price": 1500000
+            },
+            {
+                "dep_time": datetime(2024, 12, 10, 10, 0),
+                "flight_time": 90,
+                "flight_id": 2,
+                "business_class_seat_size": 25,
+                "economy_class_seat_size": 60,
+                "business_class_price": 3300000,  # Giá business cao hơn economy
+                "economy_class_price": 3000000
+            },
+            {
+                "dep_time": datetime(2024, 12, 10, 12, 0),
+                "flight_time": 80,
+                "flight_id": 3,
+                "business_class_seat_size": 20,
+                "economy_class_seat_size": 70,
+                "business_class_price": 1800000,  # Giá business cao hơn economy
+                "economy_class_price": 1500000
+            },
+            {
+                "dep_time": datetime(2024, 12, 10, 15, 0),
+                "flight_time": 100,
+                "flight_id": 4,
+                "business_class_seat_size": 15,
+                "economy_class_seat_size": 50,
+                "business_class_price": 2200000,  # Giá business cao hơn economy
+                "economy_class_price": 2000000
+            },
+            {
+                "dep_time": datetime(2024, 12, 11, 8, 0),
+                "flight_time": 130,
+                "flight_id": 5,
+                "business_class_seat_size": 30,
+                "economy_class_seat_size": 60,
+                "business_class_price": 6000000,  # Giá business cao hơn economy
+                "economy_class_price": 5500000
+            },
+            {
+                "dep_time": datetime(2024, 12, 10, 14, 0),
+                "flight_time": 95,
+                "flight_id": 6,
+                "business_class_seat_size": 20,
+                "economy_class_seat_size": 45,
+                "business_class_price": 1800000,  # Giá business cao hơn economy
+                "economy_class_price": 1500000
+            },
+            {
+                "dep_time": datetime(2024, 12, 10, 10, 30),
+                "flight_time": 115,
+                "flight_id": 7,
+                "business_class_seat_size": 15,
+                "economy_class_seat_size": 45,
+                "business_class_price": 1800000,  # Giá business cao hơn economy
+                "economy_class_price": 1500000
+            },
+            {
+                "dep_time": datetime(2024, 12, 12, 17, 0),
+                "flight_time": 120,
+                "flight_id": 8,
+                "business_class_seat_size": 10,
+                "economy_class_seat_size": 55,
+                "business_class_price": 1800000,  # Giá business cao hơn economy
+                "economy_class_price": 1500000
+            }
+        ]
+
+        for schedule in flight_schedules:
+            flight_schedule = FlightSchedule(**schedule)
+            db.session.add(flight_schedule)
+            flight_schedule.create_seat_assignments()
+
+        # Thêm dữ liệu vào bảng IntermediateAirport
+        intermediate_airports = [
+            {"airport_id": 3, "flight_id": 1, "stop_time": 30, "note": "Dừng đón khách"},
+            # Dừng trung gian tại Đà Nẵng trong tuyến Tân Sơn Nhất - Nội Bài
+            {"airport_id": 4, "flight_id": 2, "stop_time": 25, "note": "Chờ tiếp nhiên liệu"},
+            # Dừng trung gian tại Vinh trong tuyến Nội Bài - Đà Nẵng
+            {"airport_id": 2, "flight_id": 3, "stop_time": 20, "note": "Kiểm tra kỹ thuật"},
+            # Dừng trung gian tại Nội Bài trong tuyến Đà Nẵng - Vinh
+            {"airport_id": 1, "flight_id": 4, "stop_time": 25, "note": "Thay đổi phi hành đoàn"},
+            # Dừng trung gian tại Tân Sơn Nhất trong tuyến Vinh - Cần Thơ
+            {"airport_id": 2, "flight_id": 4, "stop_time": 25, "note": "Thay đổi phi hành đoàn"}
+        ]
+
+        for intermediate in intermediate_airports:
+            inter_airport = IntermediateAirport(**intermediate)
+            db.session.add(inter_airport)
+
+        db.session.commit()

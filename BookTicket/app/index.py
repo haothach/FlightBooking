@@ -6,10 +6,12 @@ from flask import render_template, request, redirect, flash, jsonify
 import dao
 from app import app, login, db
 from flask_login import login_user, logout_user
-from app.models import UserRole, Customer, Gender, Flight, Airplane, Ticket, SeatAssignment, Seat, IntermediateAirport, FlightRoute, FlightSchedule
+from app.models import (UserRole, Customer, Gender, Flight, Airplane, Ticket, SeatAssignment, Seat, IntermediateAirport,
+                        FlightRoute, FlightSchedule, Receipt, ReceiptDetail)
 from flask_login import login_user, logout_user, current_user, login_required
 from app.models import UserRole, Customer, Gender, TicketClass
 from datetime import datetime
+from sqlalchemy.exc import IntegrityError
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -177,9 +179,6 @@ def book_tickets():
     )
 
 
-from datetime import datetime
-
-
 def add_customer():
     # Xử lý từng hành khách
     for p in range(int(request.form.get('passenger_count'))):  # Dùng hidden input để truyền số lượng
@@ -249,32 +248,70 @@ def add_ticket(customer, seat_code):
     db.session.commit()
 
 
+def create_receipt(user_id, total, flight_route_id, ticket_count):
+    # Tạo Receipt
+    receipt = Receipt(
+        user_id=user_id,
+        total=total
+    )
+    db.session.add(receipt)
+    db.session.commit()  # Lưu Receipt vào DB để lấy ID
+
+    # Tạo ReceiptDetail với số lượng vé
+    receipt_detail = ReceiptDetail(
+        quantity=ticket_count,  # Số lượng vé được đặt
+        unit_price=total // ticket_count if ticket_count > 0 else total,  # Giá mỗi vé
+        receipt_id=receipt.id,
+        flight_route_id=flight_route_id  # Liên kết với flight_route_id
+    )
+    db.session.add(receipt_detail)
+
+    db.session.commit()  # Lưu ReceiptDetail vào DB
+    return receipt
+
+
 @app.route('/add_data', methods=['POST'])
 def add_data():
-    # Add customers and tickets to the database
+    # Xử lý thông tin hành khách
     add_customer()
 
-    passengers = []  # Store details of all passengers
-    for p in range(int(request.form.get('passenger_count'))):
-        name = request.form.get(f'passenger_name_{p}')
-        seat_code = request.form.get(f'seat_{p}')
-        passengers.append({
-            'name': name,
-            'seat_code': seat_code
-        })
+    # Lấy thông tin chuyến bay và tuyến bay
+    flight_id = request.form.get('flight_id')  # Lấy ID chuyến bay
+    flight = dao.get_flight_by_id(flight_id)  # Tìm chuyến bay trong DB
+    if not flight:
+        raise ValueError("Flight not found.")  # Xử lý nếu không tìm thấy chuyến bay
 
-    flight_id = request.form.get('flight')
-    flight = dao.get_flight_by_id(flight_id)
+    flight_route_id = flight.flight_route_id  # Lấy flight_route_id từ chuyến bay
+
+    # Lấy tổng tiền từ form và xử lý
+    total_str = request.form.get('total')  # Giá trị từ form
+    total = int(total_str.replace('.', '').replace(',', ''))  # Loại bỏ dấu phân cách và chuyển đổi
+
+    user_id = current_user.id  # ID người dùng đã đăng nhập
+
+    # Đếm số vé (hành khách)
+    ticket_count = int(request.form.get('passenger_count'))
+
+    # Tạo hóa đơn và chi tiết hóa đơn
+    receipt = create_receipt(user_id, total, flight_route_id, ticket_count)
+
+    # Lấy thông tin thời gian bay
     departure_date = request.form.get('departure_date')
     departure_time = request.form.get('departure_time')
     arrival_time = request.form.get('arrival_time')
-    total = request.form.get('total')  # Total amount from the form
 
-    # Return the receipt view with the necessary data
+    # Tạo danh sách hành khách để hiển thị trên hóa đơn
+    passengers = []
+    for p in range(ticket_count):
+        name = request.form.get(f'passenger_name_{p}')
+        seat_code = request.form.get(f'seat_{p}')
+        passengers.append({'name': name, 'seat_code': seat_code})
+
+    # Render hóa đơn
     return render_template('receipt.html', passengers=passengers,
                            flight=flight, departure_date=departure_date,
                            departure_time=departure_time, arrival_time=arrival_time,
-                           total=total)
+                           total=total, receipt=receipt)
 
 
 @app.route('/api/schedule', methods=['GET', 'POST'])
@@ -286,53 +323,87 @@ def flight_schedule():
     if request.method == 'POST':
         data = request.get_json()
 
-        flight_route = FlightRoute(
-            dep_airport_id=data['dep_airport'],
-            des_airport_id=data['des_airport']
-        )
-        db.session.add(flight_route)
-        db.session.commit()
+        try:
+            dep_date = datetime.strptime(data['dep_time'], "%Y-%m-%d %H:%M:00")
+            if dep_date < datetime.now():
+                return jsonify({"success": False, "message": "Ngày khởi hành không thể nhỏ hơn ngày hiện tại!"}), 400
+            # Bước 1: Kiểm tra và thêm tuyến bay
+            try:
+                existing_route = dao.find_flight_route(data['dep_airport'], data['des_airport'])
+                if not existing_route:
+                    flight_route = FlightRoute(
+                        dep_airport_id=data['dep_airport'],
+                        des_airport_id=data['des_airport']
+                    )
+                    db.session.add(flight_route)
+                    db.session.flush()
+                    existing_route = flight_route
+            except Exception as e:
+                db.session.rollback()  # Rollback nếu có lỗi
+                return jsonify({"success": False, "message": f"Lỗi khi thêm tuyến bay: {str(e)}"}), 500
 
-        flight = Flight(
-            flight_code=data['flight_code'],
-            flight_route=flight_route.id,
-            airplane_id=data['airplane_id']
-        )
-        db.session.add(flight)
-        db.session.commit()
+            # Bước 2: Thêm chuyến bay
+            try:
+                flight = Flight(
+                    flight_code=data['flight_code'],
+                    flight_route_id=existing_route.id,
+                    airplane_id=data['airplane_id']
+                )
+                db.session.add(flight)
+                db.session.flush()
+            except IntegrityError as e:
+                db.session.rollback()  # Rollback nếu có lỗi
+                # Kiểm tra lỗi duplicate
+                if 'Duplicate entry' in str(e.orig):
+                    return jsonify({"success": False, "message": "Đã tồn tại mã chuyến trong tuyến bay này."}), 400
+                return jsonify({"success": False, "message": f"Error: {str(e)}"}), 500
 
-        flight_schedule = FlightSchedule(
-            dep_time=data['dep_time'],
-            flight_time=data['flight_time'],
-            flight_id=flight.id,
-            business_class_seat_size=data['business_class_seat_size'],
-            economy_class_seat_size=data['economy_class_seat_size'],
-            business_class_price=data['first_class_price'],
-            economy_class_price=data['second_class_price']
-        )
-        db.session.add(flight_schedule)
+            # Bước 3: Thêm lịch trình bay
+            try:
+                flight_schedule = FlightSchedule(
+                    dep_time=data['dep_time'],
+                    flight_time=data['flight_time'],
+                    flight_id=flight.id,
+                    business_class_seat_size=int(data['business_class_seat_size']),
+                    economy_class_seat_size=int(data['economy_class_seat_size']),
+                    business_class_price=int(data['first_class_price']),
+                    economy_class_price=int(data['second_class_price'])
+                )
+                db.session.add(flight_schedule)
+            except Exception as e:
+                db.session.rollback()  # Rollback nếu có lỗi
+                return jsonify({"success": False, "message": f"Lỗi khi thêm lịch trình bay: {str(e)}"}), 500
 
-         # Xử lý sân bay trung gian
-        if data.get('ai_1'):
-            intermediate_airport_1 = IntermediateAirport(
-                airport_id=data['ai_1'],
-                flight_id=data['flight_id'],
-                stop_time=data['stop_time_1'],
-                note=data['note_1']
-            )
-            db.session.add(intermediate_airport_1)
+            # Bước 4: Xử lý sân bay trung gian
+            try:
+                if data.get('ai_1'):
+                    intermediate_airport_1 = IntermediateAirport(
+                        flight_id=flight.id,
+                        airport_id=data['ai_1'],
+                        stop_time=data['stop_time_1'],
+                        note=data.get('note_1')
+                    )
+                    db.session.add(intermediate_airport_1)
+                if data.get('ai_2'):
+                    intermediate_airport_2 = IntermediateAirport(
+                        flight_id=flight.id,
+                        airport_id=data['ai_2'],
+                        stop_time=data['stop_time_2'],
+                        note=data.get('note_2')
+                    )
+                    db.session.add(intermediate_airport_2)
+            except Exception as e:
+                db.session.rollback()  # Rollback nếu có lỗi
+                return jsonify({"success": False, "message": f"Lỗi khi thêm sân bay trung gian: {str(e)}"}), 500
 
-        if data.get('ai_2'):
-            intermediate_airport_2 = IntermediateAirport(
-                airport_id=data['ai_2'],
-                flight_id=data['flight_id'],
-                stop_time=data['stop_time_2'],
-                note=data['note_2']
-            )
-            db.session.add(intermediate_airport_2)
+            # Lưu tất cả thay đổi vào cơ sở dữ liệu
+            db.session.commit()
 
-        # Lưu thay đổi vào cơ sở dữ liệu
-        db.session.commit()
+            return jsonify({"success": True, "message": "Lưu thành công"}), 200
+
+        except Exception as e:
+            db.session.rollback()  # Rollback nếu có lỗi toàn bộ
+            return jsonify({"success": False, "message": f"Lỗi không xác định: {str(e)}"}), 500
 
     return render_template('schedule.html', flightcodes=flightcodes, airports=airports, airplanes=airplanes)
 
