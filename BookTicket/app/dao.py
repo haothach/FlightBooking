@@ -261,6 +261,14 @@ def get_max_seat(airplane_id):
     ).first()
 
 
+
+def find_flight_route(dep_id,des_id):
+    return FlightRoute.query.filter_by(
+        dep_airport_id=dep_id,
+        des_airport_id=des_id
+    ).first()
+
+
 def revenue_stats():
     # Alias cho bảng Airport và Province
     dep_airport = aliased(Airport)  # Sân bay đi
@@ -286,26 +294,21 @@ def revenue_stats():
             )
             .all())
 
-
-def find_flight_route(dep_id,des_id):
-    return FlightRoute.query.filter_by(
-        dep_airport_id=dep_id,
-        des_airport_id=des_id
-    ).first()
-
-
 def revenue_month(time='month', year=datetime.now().year):
-    return db.session.query(func.extract(time, Receipt.created_date),
-                            func.sum(ReceiptDetail.quantity * ReceiptDetail.unit_price))\
-                    .join(ReceiptDetail,
-                          ReceiptDetail.receipt_id.__eq__(Receipt.id)).filter(func.extract("year", Receipt.created_date).__eq__(year))\
-                    .group_by(func.extract(time, Receipt.created_date)).order_by(func.extract(time, Receipt.created_date)).all()
-
+    return db.session.query(
+                func.extract(time, Receipt.created_date),
+                func.sum(ReceiptDetail.quantity * ReceiptDetail.unit_price)
+            )\
+            .join(ReceiptDetail, ReceiptDetail.receipt_id == Receipt.id) \
+            .filter(func.extract("year", Receipt.created_date) == year) \
+            .group_by(func.extract(time, Receipt.created_date)) \
+            .order_by(func.extract(time, Receipt.created_date)) \
+            .all()
 
 def revenue_year(time='year'):
     return db.session.query(
-        func.extract(time, Receipt.created_date).label('year'),
-        func.sum(ReceiptDetail.quantity * ReceiptDetail.unit_price).label('revenue')
+        func.extract(time, Receipt.created_date),
+        func.sum(ReceiptDetail.quantity * ReceiptDetail.unit_price)
     ).join(
         ReceiptDetail, ReceiptDetail.receipt_id == Receipt.id
     ).group_by(
