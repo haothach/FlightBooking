@@ -10,7 +10,7 @@ from datetime import timedelta, datetime
 from sqlalchemy.orm import joinedload, aliased
 from sqlalchemy import func, text, and_
 from flask_login import current_user
-
+from sqlalchemy.sql import extract
 
 def load_province():
     return Province.query.order_by('name').all()
@@ -270,15 +270,15 @@ def revenue_stats():
 
     return (db.session.query(
                 FlightRoute.id.label('flight_route_id'),
-                func.sum(ReceiptDetail.quantity * ReceiptDetail.unit_price).label('revenue'),  # Tổng doanh thu
-                dep_province.name.label('departure_province'),  # Tỉnh nơi đi
-                des_province.name.label('destination_province')  # Tỉnh nơi đến
+                func.sum(ReceiptDetail.quantity * ReceiptDetail.unit_price),
+                dep_province.name,
+                des_province.name
             )
-            .join(ReceiptDetail, ReceiptDetail.flight_route_id == FlightRoute.id)  # Join ReceiptDetail với FlightRoute
-            .join(dep_airport, dep_airport.id == FlightRoute.dep_airport_id)  # Join sân bay đi
-            .join(dep_province, dep_province.id == dep_airport.province_id)  # Join tỉnh nơi đi
-            .join(des_airport, des_airport.id == FlightRoute.des_airport_id)  # Join sân bay đến
-            .join(des_province, des_province.id == des_airport.province_id)  # Join tỉnh nơi đến
+            .join(ReceiptDetail, ReceiptDetail.flight_route_id == FlightRoute.id)
+            .join(dep_airport, dep_airport.id == FlightRoute.dep_airport_id)
+            .join(dep_province, dep_province.id == dep_airport.province_id)
+            .join(des_airport, des_airport.id == FlightRoute.des_airport_id)
+            .join(des_province, des_province.id == des_airport.province_id)
             .group_by(
                 FlightRoute.id,  # Nhóm theo ID tuyến bay
                 dep_province.name,  # Nhóm theo tên tỉnh nơi đi
@@ -294,6 +294,24 @@ def find_flight_route(dep_id,des_id):
     ).first()
 
 
-if __name__ == '__main__':
-    with app.app_context():
-        print(load_flight())
+def revenue_month(time='month', year=datetime.now().year):
+    return db.session.query(func.extract(time, Receipt.created_date),
+                            func.sum(ReceiptDetail.quantity * ReceiptDetail.unit_price))\
+                    .join(ReceiptDetail,
+                          ReceiptDetail.receipt_id.__eq__(Receipt.id)).filter(func.extract("year", Receipt.created_date).__eq__(year))\
+                    .group_by(func.extract(time, Receipt.created_date)).order_by(func.extract(time, Receipt.created_date)).all()
+
+
+def revenue_year(time='year'):
+    return db.session.query(
+        func.extract(time, Receipt.created_date).label('year'),
+        func.sum(ReceiptDetail.quantity * ReceiptDetail.unit_price).label('revenue')
+    ).join(
+        ReceiptDetail, ReceiptDetail.receipt_id == Receipt.id
+    ).group_by(
+        func.extract(time, Receipt.created_date)
+    ).order_by(
+        func.extract(time, Receipt.created_date)
+    ).all()
+
+

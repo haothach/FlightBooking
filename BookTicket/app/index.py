@@ -97,7 +97,8 @@ def login_view():
             login_user(user=user)
             if user.user_role == UserRole.ADMIN:
                 return redirect('/admin')
-
+            elif user.user_role == UserRole.STAFF:
+                return redirect('/staff')
             next_url = request.form.get('next')
             # Xử lý nếu next_url không tồn tại hoặc không hợp lệ
             if not next_url or next_url == '/':
@@ -116,6 +117,26 @@ def login_admin_view():
     if user:
         login_user(user)
     return redirect('/admin')
+
+
+@app.route("/staff")
+def staff_view():
+    return render_template("staff.html")
+
+
+@app.route('/submit-contact', methods=['POST'])
+def submit_contact():
+    name = request.form.get('name')
+    email = request.form.get('email')
+    message = request.form.get('message')
+    # Gửi thông báo thành công
+    flash('Yêu cầu hỗ trợ của bạn đã được gửi thành công!', 'success')
+    return redirect('/contact')
+
+
+@app.route('/contact')
+def contact_view():
+    return render_template('contact.html')
 
 
 @app.route('/logout')
@@ -418,6 +439,4 @@ def update_seats(airplane_id):
 
 
 if __name__ == '__main__':
-    from app import admin
-
     app.run(debug=True)
