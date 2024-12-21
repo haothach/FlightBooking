@@ -407,7 +407,7 @@ if __name__ == '__main__':
             {"name": "Đà Lạt"},
             {"name": "Quảng Ninh"},
             {"name": "Khánh Hòa"},
-            {"name": "Bình Dương"}
+            {"name": "Đồng Nai"}
         ]
 
         for p in provinces:
