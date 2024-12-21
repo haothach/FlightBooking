@@ -31,7 +31,8 @@
         </div>
         <div class="col-md-6 mb-3">
             <label for="passenger_birth_{{ p }}">Ngày sinh</label>
-            <input type="date" class="form-control" id="passenger_birth_{{ p }}" name="passenger_birth_{{ p }}" required>
+            <input type="date" class="form-control" id="passenger_birth_{{ p }}" name="passenger_birth_{{ p }}"
+                   required>
         </div>
         <div class="col-md-6 mb-3">
             <label for="passenger_gender_{{ p }}">Giới tính</label>
@@ -118,29 +119,65 @@
 
     <!-- Nút thanh toán -->
     {% if current_user.is_authenticated %}
+    <div class="payment-method-container">
+        <h3>Chọn phương thức thanh toán</h3>
+
+        <div class="form-check">
+            <input type="radio" class="form-check-input" id="payment-momo" name="payment_method" value="momo"
+                   required>
+            <label class="form-check-label" for="payment-momo">
+                <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-MoMo-Square.png"
+                     alt="MoMo" style="width: 50px;"> MoMo
+            </label>
+        </div>
+        <div class="form-check">
+            <input type="radio" class="form-check-input" id="payment-bank" name="payment_method" value="bank">
+            <label class="form-check-label" for="payment-bank">
+                <img src="https://static.vecteezy.com/system/resources/previews/000/352/309/original/bank-vector-icon.jpg"
+                     alt="Ngân hàng" style="width: 50px;"> Ngân hàng
+            </label>
+        </div>
+    </div>
+     <input type="hidden" id="payment-method-hidden" name="payment_method" value="">
+
     <div class="text-center mt-4">
         <div class="text-center mt-4">
-            <button type="button" class="btn btn-danger btn-lg" id="confirmPaymentBtn">Mua Vé</button>
+            <button type="button" class="btn btn-danger btn-lg" id="confirmPaymentBtn" onclick="submitForm()">Mua Vé
+            </button>
         </div>
     </div>
     {% endif %}
 
-    <input type="hidden" name="flight_id" value="{{ flight.id }}">
+
 </form>
 
 <script>
-     if (window.location.pathname === '/booking') {
-        const params = new URLSearchParams(window.location.search);
-        localStorage.setItem('bookingParams', JSON.stringify(Object.fromEntries(params.entries())));
-    }
-    // Xử lý xác nhận thanh toán
-    document.getElementById('confirmPaymentBtn').addEventListener('click', function() {
-        const userConfirmed = confirm("Bạn có chắc chắn muốn thanh toán?");
-        if (userConfirmed) {
-            // Nếu người dùng đồng ý, gửi form thanh toán
-            document.getElementById('paymentForm').submit();
+    if (window.location.pathname === '/booking') {
+       const params = new URLSearchParams(window.location.search);
+       localStorage.setItem('bookingParams', JSON.stringify(Object.fromEntries(params.entries())));
+   }
+
+    function submitForm() {
+        // Lấy giá trị của phương thức thanh toán được chọn
+        const selectedMethod = document.querySelector('input[name="payment_method"]:checked');
+        const hiddenInput = document.getElementById('payment-method-hidden');
+
+        if (selectedMethod) {
+            // Gán giá trị vào input hidden dựa trên phương thức thanh toán
+            if (selectedMethod.value === 'momo') {
+                hiddenInput.value = 'momo_method';
+            } else if (selectedMethod.value === 'bank') {
+                hiddenInput.value = 'bank_method';
+            }
+            const userConfirmed = confirm("Bạn có chắc chắn muốn thanh toán?");
+            if (userConfirmed) {
+               // Nếu người dùng đồng ý, gửi form thanh toán
+               document.getElementById('paymentForm').submit();
+       }
+        } else {
+            alert("Vui lòng chọn phương thức thanh toán!");
         }
-    });
+    }
 </script>
 
 {% endblock %}

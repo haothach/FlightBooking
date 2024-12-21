@@ -8,6 +8,7 @@ from enum import Enum as RoleEnum
 from enum import Enum as AirlineEnum
 from enum import Enum as TicketClassEnum
 from enum import Enum as GenderEnum
+from enum import Enum as MethodEnum
 from datetime import datetime
 from flask_login import UserMixin
 import math
@@ -42,6 +43,10 @@ class TicketClass(TicketClassEnum):
 class Gender(GenderEnum):
     Mr = 1
     Ms = 2
+
+class Method(MethodEnum):
+    Momo = 1
+    Bank = 2
 
 
 class User(BaseModel, UserMixin):
@@ -362,6 +367,7 @@ class Policy(BaseModel):
 class Receipt(BaseModel):
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
     total = Column(Integer, nullable=False)
+    method = Column(Enum(Method), nullable=False)
     created_date = Column(DateTime, default=datetime.now())
 
     receipt_details = relationship('ReceiptDetail', backref='receipt', lazy=True)

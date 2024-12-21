@@ -38,7 +38,7 @@ class LogoutView(MyView):
     @expose("/")
     def __index__(self):
         logout_user()
-        return redirect("/admin")
+        return redirect("/")
 
 
 class StatsView(MyView):

@@ -9,7 +9,7 @@ from flask_login import login_user, logout_user
 from app.models import (UserRole, Customer, Gender, Flight, Airplane, Ticket, SeatAssignment, Seat, IntermediateAirport,
                         FlightRoute, FlightSchedule, Receipt, ReceiptDetail)
 from flask_login import login_user, logout_user, current_user, login_required
-from app.models import UserRole, Customer, Gender, TicketClass
+from app.models import UserRole, Customer, Gender, TicketClass, Method
 from datetime import datetime
 
 
@@ -264,11 +264,12 @@ def add_ticket(customer, seat_code):
     db.session.add(ticket)
     db.session.commit()
 
-def create_receipt(user_id, total, flight_route_id, ticket_count):
+def create_receipt(user_id, total, flight_route_id, ticket_count, method):
     # Tạo Receipt
     receipt = Receipt(
         user_id=user_id,
-        total=total
+        total=total,
+        method= Method.Bank if method.__eq__('bank_method') else Method.Momo
     )
     db.session.add(receipt)
     db.session.commit()  # Lưu Receipt vào DB để lấy ID
@@ -303,6 +304,7 @@ def add_data():
     # Lấy tổng tiền từ form và xử lý
     total_str = request.form.get('total')  # Giá trị từ form
     total = int(total_str.replace('.', '').replace(',', ''))  # Loại bỏ dấu phân cách và chuyển đổi
+    method = request.form.get('payment_method')
 
     user_id = current_user.id  # ID người dùng đã đăng nhập
 
@@ -310,7 +312,7 @@ def add_data():
     ticket_count = int(request.form.get('passenger_count'))
 
     # Tạo hóa đơn và chi tiết hóa đơn
-    receipt = create_receipt(user_id, total, flight_route_id, ticket_count)
+    receipt = create_receipt(user_id, total, flight_route_id, ticket_count, method)
 
     # Lấy thông tin thời gian bay
     departure_date = request.form.get('departure_date')
