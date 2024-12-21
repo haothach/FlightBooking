@@ -261,7 +261,6 @@ def get_max_seat(airplane_id):
     ).first()
 
 
-
 def find_flight_route(dep_id,des_id):
     return FlightRoute.query.filter_by(
         dep_airport_id=dep_id,

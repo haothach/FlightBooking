@@ -44,6 +44,7 @@ class Gender(GenderEnum):
     Mr = 1
     Ms = 2
 
+
 class Method(MethodEnum):
     Momo = 1
     Bank = 2

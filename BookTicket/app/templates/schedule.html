@@ -260,6 +260,19 @@
    </div>
 </form>
 <script>
+//Xử lí đăng nhập
+ function showAlertAndRedirect(message, redirectUrl) {
+        alert(message);  // Hiển thị thông báo
+        window.location.href = redirectUrl;  // Chuyển hướng đến trang đăng nhập
+    }
+
+    // Giả sử bạn nhận thông báo và URL chuyển hướng từ API
+    const response = { "success": false, "message": "Bạn cần đăng nhập để truy cập!", "redirect": "/login" };
+
+    if (!response.success) {
+        showAlertAndRedirect(response.message, response.redirect);
+    }
+
 // Hiện sân bay trung gian
    function toggleTransitFields() {
    const checkbox = document.getElementById('enableTransit');
@@ -435,13 +448,16 @@ function confirm() {
    const hour = document.getElementById('hour').value;
    const minute = document.getElementById('minute').value;
 
+   const flight_hour = document.getElementById('flight_hour').value;
+   const flight_minute = document.getElementById('flight_minute').value;
+
    // Kiểm tra dữ liệu
    if (!checkTime(year, month, day, hour, minute)) {
        return;
    }
 
    const formattedDateTime = formatDateTime(year, month, day, hour, minute);
-   const depTimeInMinutes = convertToMinutes(hour, minute);
+   const depTimeInMinutes = convertToMinutes(flight_hour, flight_minute);
 
    // Kiểm tra và tính toán thời gian dừng nếu có
    let flightStopTimeOneInMinutes = null;
