@@ -21,13 +21,21 @@ def load_airport():
 
 
 def load_flight():
-    return Flight.query.order_by('id').all()
+    flights = Flight.query.all()  # Lấy tất cả các chuyến bay
+    flight_codes = {flight.flight_code for flight in flights}  # Dùng set để lấy các mã chuyến bay duy nhất
+    return sorted(flight_codes)  # Sắp xếp theo thứ tự
+
+
+def load_ariplane():
+    return Airplane.query.order_by('id').all()
+
 
 def get_flight_by_id(flight_id):
     return db.session.query(Flight).options(
         joinedload(Flight.inter_airports),
         joinedload(Flight.flight_schedules)
     ).filter(Flight.id == flight_id).first()
+
 
 def add_user(name, username, password, avatar):
     password = str(hashlib.md5(password.encode('utf-8')).hexdigest())
@@ -244,17 +252,14 @@ def format_flight_time(flight_time):
         return f"{hours} giờ {str(minutes).zfill(2)} phút"
 
 
-def get_max_seat(flight_id):
+def get_max_seat(airplane_id):
     return db.session.query(
         Airplane.business_class_seat_size,
         Airplane.economy_class_seat_size
-
-    ).join(Flight).filter(
-        Flight.id == flight_id,
-        Airplane.id == Flight.airplane_id
+    ).filter(
+        Airplane.id == airplane_id
     ).first()
 
-from sqlalchemy.orm import aliased
 
 def revenue_stats():
     # Alias cho bảng Airport và Province
@@ -282,12 +287,20 @@ def revenue_stats():
             .all())
 
 
+def find_flight_route(dep_id,des_id):
+    return FlightRoute.query.filter_by(
+        dep_airport_id=dep_id,
+        des_airport_id=des_id
+    ).first()
+
+
 def revenue_month(time='month', year=datetime.now().year):
     return db.session.query(func.extract(time, Receipt.created_date),
                             func.sum(ReceiptDetail.quantity * ReceiptDetail.unit_price))\
                     .join(ReceiptDetail,
                           ReceiptDetail.receipt_id.__eq__(Receipt.id)).filter(func.extract("year", Receipt.created_date).__eq__(year))\
                     .group_by(func.extract(time, Receipt.created_date)).order_by(func.extract(time, Receipt.created_date)).all()
+
 
 def revenue_year(time='year'):
     return db.session.query(
@@ -302,6 +315,3 @@ def revenue_year(time='year'):
     ).all()
 
 
-if __name__ == '__main__':
-    with app.app_context():
-        print(revenue_year())

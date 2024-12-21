@@ -99,20 +99,6 @@ class FlightRoute(BaseModel):
     flights = relationship('Flight', backref='flight_route', lazy=True)
     receipt_details = relationship('ReceiptDetail', backref='flight_route', lazy=True)
 
-    @validates('dep_airport_id', 'des_airport_id')
-    def validate_airports_and_duplicates(self, key, value):
-        # Nếu kiểm tra 'des_airport_id', đảm bảo sân bay đi và đến không trùng nhau
-        if key == 'des_airport_id' and value == self.dep_airport_id:
-            raise ValueError("Departure and destination airports must be different.")
-        # Kiểm tra trùng lặp tuyến bay
-        existing_route = FlightRoute.query.filter_by(
-            dep_airport_id=self.dep_airport_id if key != 'dep_airport_id' else value,
-            des_airport_id=self.des_airport_id if key != 'des_airport_id' else value
-        ).first()
-        if existing_route and existing_route.id != self.id:
-            raise ValueError("This flight route already exists.")
-        return value
-
     def __str__(self):
         dep_airport_name = self.dep_airport.name
         des_airport_name = self.des_airport.name
@@ -169,13 +155,18 @@ class Airplane(BaseModel):
 
 
 class Flight(BaseModel):
-    flight_code = Column(String(20), nullable=False, unique=True)
+    flight_code = Column(String(20), nullable=False)
     flight_route_id = Column(Integer, ForeignKey(FlightRoute.id), nullable=False)
     airplane_id = Column(Integer, ForeignKey(Airplane.id), nullable=False)
 
-    # flight_schedules = relationship('FlightSchedule', backref='flight', lazy=True)
+    # Quan hệ
     inter_airports = relationship('IntermediateAirport', backref='flight', lazy=True)
     flight_schedules = relationship('FlightSchedule', backref='flight', lazy=True)
+
+    # Đảm bảo flight_code là duy nhất khi kết hợp với flight_route_id
+    __table_args__ = (
+        UniqueConstraint('flight_code', 'flight_route_id', name='uix_flight_code_route'),
+    )
 
     def __str__(self):
         return self.flight_code
@@ -213,12 +204,12 @@ class FlightSchedule(BaseModel):
         # Kiểm tra số lượng ghế hạng business và economy không vượt quá khả năng của máy bay
         if self.business_class_seat_size > airplane.business_class_seat_size:
             raise ValueError(
-                f"Business class seat size cannot exceed the airplane's business capacity ({airplane.business_class_seat_size})."
+                f"Số ghế hạng thương gia không được nhỏ hơn số lượng quy định ({airplane.business_class_seat_size})."
             )
 
         if self.economy_class_seat_size > airplane.economy_class_seat_size:
             raise ValueError(
-                f"economy class seat size cannot exceed the airplane's economy capacity ({airplane.economy_class_seat_size})."
+                f"Số ghế hạng phổ thông không được nhỏ hơn số lượng quy định ({airplane.economy_class_seat_size})."
             )
 
         policy = db.session.query(Policy).first()
@@ -228,18 +219,18 @@ class FlightSchedule(BaseModel):
         # Kiểm soát flight_time
         if self.flight_time < policy.minimun_flight_time:
             raise ValueError(
-                f"Flight time must be at least {policy.minimun_flight_time} minutes. Provided: {self.flight_time} minutes."
+                f"Thời gian bay phải ít nhất {policy.minimun_flight_time} minutes."
             )
 
         #Kiểm soát giá vé
         if self.business_class_price < policy.ticket_price:
             raise ValueError(
-                f"Business class price cannot be less than the policy ticket price ({policy.ticket_price}). Provided: {self.business_class_price}."
+                f"Giá vé hạng thương gia không được nhỏ hơn ({policy.ticket_price})."
             )
 
         if self.economy_class_price < policy.ticket_price:
             raise ValueError(
-                f"economy class price cannot be less than the policy ticket price ({policy.ticket_price}). Provided: {self.economy_class_price}."
+                f"Giá vé hạng phổ thông không được nhỏ hơn({policy.ticket_price})."
             )
 
     def create_seat_assignments(self):
@@ -251,7 +242,7 @@ class FlightSchedule(BaseModel):
 
         # Kiểm tra nếu không tìm thấy Flight, thoát ra
         if not flight:
-            print(f"Flight with id {self.flight_id} not found.")
+            print(f"Không tìm thấy chuyến bay nào có id là : {self.flight_id} .")
             return
 
         # Lấy danh sách ghế business và economy với số lượng giới hạn theo yêu cầu
@@ -348,8 +339,6 @@ class Ticket(BaseModel):
     seat_assignment_id = Column(Integer, ForeignKey(SeatAssignment.id), nullable=False)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
     customer_id = Column(Integer, ForeignKey(Customer.id), nullable=False)
-
-
 
 
 class Policy(BaseModel):
