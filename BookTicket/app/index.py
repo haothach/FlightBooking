@@ -2,7 +2,7 @@ import hashlib
 import string
 
 from flask import render_template, request, redirect, flash, jsonify
-
+from app import admin
 import dao
 from app import app, login, db
 from flask_login import login_user, logout_user
