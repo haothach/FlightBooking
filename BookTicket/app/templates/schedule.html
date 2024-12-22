@@ -260,18 +260,7 @@
    </div>
 </form>
 <script>
-//Xử lí đăng nhập
- function showAlertAndRedirect(message, redirectUrl) {
-        alert(message);  // Hiển thị thông báo
-        window.location.href = redirectUrl;  // Chuyển hướng đến trang đăng nhập
-    }
 
-    // Giả sử bạn nhận thông báo và URL chuyển hướng từ API
-    const response = { "success": false, "message": "Bạn cần đăng nhập để truy cập!", "redirect": "/login" };
-
-    if (!response.success) {
-        showAlertAndRedirect(response.message, response.redirect);
-    }
 
 // Hiện sân bay trung gian
    function toggleTransitFields() {

@@ -5,19 +5,6 @@
 
 <div class="container my-5 col-md-8 col-lg-6 mx-auto">
 
-    <div class="position-absolute top-10 start-50 translate-middle flash-message-container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show text-center" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {% endfor %}
-        {% endif %}
-        {% endwith %}
-    </div>
-
 
     <h2 class="text-center mb-7">TRA CỨU CHUYẾN BAY</h2>
     <form method="get" action="/search">

@@ -1,7 +1,7 @@
 import hashlib
 import string
 
-from flask import render_template, request, redirect, flash, jsonify
+from flask import render_template, request, redirect, flash, jsonify, url_for
 from app import admin
 import dao
 from app import app, login, db
@@ -53,16 +53,16 @@ def search():
         ]
 
     # Kiểm tra ngày chọn có trước ngày hiện tại không
-    # departure_date = datetime.strptime(departure_date, '%Y-%m-%d').date()
-    # today = datetime.now().date()
-    # if departure_date < today:
-    #     flash("Ngày đi không được trước ngày hôm nay!", "danger")
-    #     return redirect('/')
-    #
-    # # Kiểm tra chọn điểm đi và điểm đến chưa
-    # if not departure or not destination:
-    #     flash("Vui lòng chọn điểm đi và điểm đến!", "danger")
-    #     return redirect('/')
+    departure_date = datetime.strptime(departure_date, '%Y-%m-%d').date()
+    today = datetime.now().date()
+    if departure_date < today:
+        flash("Ngày đi không được trước ngày hôm nay!", "danger")
+        return redirect('/')
+
+    # Kiểm tra chọn điểm đi và điểm đến chưa
+    if not departure or not destination:
+        flash("Vui lòng chọn điểm đi và điểm đến!", "danger")
+        return redirect('/')
 
     return render_template('search.html', departure=departure, destination=destination,
                            departure_date=formatted_date, passenger=passenger, flights=flights)
@@ -99,6 +99,7 @@ def login_view():
                 return redirect('/admin')
             elif user.user_role == UserRole.STAFF:
                 return redirect('/staff')
+
             next_url = request.form.get('next')
             # Xử lý nếu next_url không tồn tại hoặc không hợp lệ
             if not next_url or next_url == '/':
@@ -339,15 +340,14 @@ def add_data():
 
 @app.route('/api/schedule', methods=['GET', 'POST'])
 def flight_schedule():
-    # Xác thực người dùng
     if not current_user.is_authenticated:
         flash("Bạn cần đăng nhập để truy cập!")  # Thông báo cho người dùng
-        return redirect('/login')  # Chuyển hướng đến trang đăng nhập
+        return redirect(url_for('login_view'))  # Chuyển hướng đến trang đăng nhập
 
         # Kiểm tra vai trò người dùng
     if current_user.user_role != UserRole.STAFF:
         flash("Bạn không phải là nhân viên hệ thống!")  # Thông báo cho người dùng
-        return redirect('/')  # Chuyển hướng đến trang đăng nhập
+        return redirect(url_for('index'))  # Chuyển hướng đến trang chính
 
     flightcodes = dao.load_flight()
     airports = dao.load_airport()

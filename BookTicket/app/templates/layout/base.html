@@ -21,10 +21,24 @@
 
 
 <main class="container">
+
+
     {% block content required %}
     {% endblock %}
 </main>
 
+<div class="position-absolute top-0 start-50 translate-middle-x flash-message-container mt-3">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show text-center" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+</div>
 
 {% block footer %}
 {% include 'layout/footer.html' %}

@@ -4,9 +4,10 @@
 <h1 class="text-center text-primary mt-4">THÔNG TIN HÀNH KHÁCH VÀ THANH TOÁN</h1>
 
 {% if not current_user.is_authenticated %}
-<div class="alert alert-danger text-center fs-4" role="alert">
-    <a href="/login" class="alert-link">BẠN CẦN ĐĂNG NHẬP ĐỂ MUA VÉ</a>
+<div class="card bg-danger text-white text-center fs-4 p-3">
+    <a href="/login?next={{ request.url }}" class="text-decoration-underline text-white fw-bold">BẠN CẦN ĐĂNG NHẬP ĐỂ MUA VÉ</a>
 </div>
+
 {% endif %}
 <form action="/add_data" method="POST" id="paymentForm">
     <input type="hidden" name="passenger_count" value="{{ passenger }}">

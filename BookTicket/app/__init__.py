@@ -12,6 +12,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:%s@localhost/fligh
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 app.config["NUMBER_ROWS"] = 6
 
+
 db = SQLAlchemy(app)
 
 cloudinary.config(cloud_name='dnoubiojc',

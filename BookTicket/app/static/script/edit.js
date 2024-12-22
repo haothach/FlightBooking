@@ -50,8 +50,8 @@ document.addEventListener("DOMContentLoaded", function () {
         departureDateInput.value = `${yyyy}-${mm}-${dd}`;
     }
 
-})
-     Logic hiệu ứng thông báo
+
+     //Logic hiệu ứng thông báo
     const alerts = document.querySelectorAll('.alert');
     if (alerts.length > 0) {
         alerts.forEach(alert => {
@@ -65,4 +65,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }, 3000);
         });
     }
+})
+
+
 
