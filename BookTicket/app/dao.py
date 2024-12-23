@@ -32,8 +32,8 @@ def load_unique_flights():
     return flights
 
 
-def get_newest_policy():
-    return
+def get_dep_time(flight_id):
+    return db.session.query(FlightSchedule.dep_time).filter(FlightSchedule.flight_id == flight_id).all()
 
 
 def get_flight(code):

@@ -6,10 +6,15 @@
         </button>
         <div class="collapse navbar-collapse" id="collapsibleNavbar">
             <ul class="navbar-nav me-auto">
+                {% if current_user|is_staff %}
+                <li class="nav-item">
+                    <a class="nav-link" href="/staff">Trang chủ</a>
+                </li>
+                {% else %}
                 <li class="nav-item">
                     <a class="nav-link" href="/">Trang chủ</a>
                 </li>
-
+                {% endif %}
                 <li class="nav-item">
                     <a class="nav-link" href="/">Tin khuyến mãi</a>
                 </li>
