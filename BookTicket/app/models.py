@@ -308,7 +308,7 @@ class IntermediateAirport(db.Model):
         # Lấy flight_id từ kwargs
         flight_id = kwargs.get('flight_id')
         if not flight_id:
-            raise ValueError("Flight ID must be provided.")
+            raise ValueError("Mã chuyến bay phải được cung cấp.")
 
         # Lấy thông tin Policy
         policy = db.session.query(Policy).first()
@@ -320,14 +320,14 @@ class IntermediateAirport(db.Model):
 
         if current_inter_airports >= policy.max_inter_airport:
             raise ValueError(
-                f"Cannot add more intermediate airports for this flight. Maximum allowed: {policy.max_inter_airport}."
+                f"Không thể tạo nhiều sân bay trung gian hơn nữa.Tối đa chi được {policy.max_inter_airport}."
             )
 
         # Kiểm soát giá trị stop_time
         stop_time = kwargs.get('stop_time', self.stop_time)
         if not (policy.minimum_stop_time <= stop_time <= policy.maximum_stop_time):
             raise ValueError(
-                f"Stop time must be between {policy.minimum_stop_time} and {policy.maximum_stop_time}. Provided: {stop_time}."
+                f"Thời gian dừng phải nằm giữa  {policy.minimum_stop_time} phút và {policy.maximum_stop_time} phút."
             )
 
     def __str__(self):
@@ -383,8 +383,8 @@ if __name__ == '__main__':
             maximum_stop_time=30,  # Thời gian dừng tối đa tại sân bay trung gian
             number_ticket_class=2,  # Số hạng vé (2 hạng vé)
             ticket_price=1000,  # Giá vé (ví dụ: 1000 là đơn vị tiền tệ)
-            ticket_sell_time=1440,  # Thời gian bán vé (ví dụ: 1440 phút = 1 ngày)
-            ticket_booking_time=240,  # Thời gian đặt vé (ví dụ: 240 phút = 4 giờ trước khi chuyến bay)
+            ticket_sell_time=4,  # Thời gian bán vé (ví dụ: 1440 phút = 1 ngày)
+            ticket_booking_time=12,  # Thời gian đặt vé (ví dụ: 240 phút = 4 giờ trước khi chuyến bay)
         )
         # Thêm vào session và commit
         db.session.add(new_policy)

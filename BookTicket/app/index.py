@@ -1,16 +1,16 @@
 import hashlib
 import string
 
-from flask import render_template, request, redirect, flash, jsonify, url_for
+from flask import render_template, request, redirect, flash, jsonify, url_for, session
 from app import admin
 import dao
 from app import app, login, db
 from flask_login import login_user, logout_user
 from app.models import (UserRole, Customer, Gender, Flight, Airplane, Ticket, SeatAssignment, Seat, IntermediateAirport,
-                        FlightRoute, FlightSchedule, Receipt, ReceiptDetail, User)
+                        FlightRoute, FlightSchedule, Receipt, ReceiptDetail, User, Airport, Policy)
 from flask_login import login_user, logout_user, current_user, login_required
 from app.models import UserRole, Customer, Gender, TicketClass, Method
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy.exc import IntegrityError
 
 
@@ -100,12 +100,11 @@ def login_view():
             elif user.user_role == UserRole.STAFF:
                 return redirect('/staff')
 
-            next_url = request.form.get('next')
-            # Xử lý nếu next_url không tồn tại hoặc không hợp lệ
-            if not next_url or next_url == '/':
-                next_url = '/'
-            return redirect(next_url)
-        return redirect('/login')
+            next_url = request.args.get('next')
+            return redirect(next_url if next_url else '/')
+        else:
+            flash("Đăng nhập thất bại", "danger")
+            return redirect('/login')
     return render_template("login.html")
 
 
@@ -143,12 +142,22 @@ def contact_view():
 @app.route('/logout')
 def logout_process():
     logout_user()
-    return redirect('/login')
+    return redirect('/')
 
 
 @login.user_loader
 def load_user(user_id):
     return dao.get_user_by_id(user_id)
+
+
+def book_sell_ticket(time, now, dep_time):
+    min_sell_time = dep_time - timedelta(hours=int(time))
+    # Kiểm tra xem thời gian hiện tại có trước thời gian đặt vé không
+    if now > min_sell_time:
+        flash(f"Chỉ được bán vé các chuyến bay trước {time} giờ trước giờ khởi hành", "danger")
+        # Lấy các tham số query từ URL gốc và tạo lại URL với các tham số đó
+        print(request.referrer)
+        return redirect(request.referrer)
 
 
 @app.route('/booking')
@@ -162,6 +171,17 @@ def book_tickets():
     departure_time = request.args.get('departure_time')
     arrival_time = request.args.get('arrival_time')
     price = int(request.args.get('price'))
+
+    latest_policy = Policy.query.order_by(Policy.id.desc()).first()# Lấy policy mới nhất
+    time_now = datetime.now().replace(microsecond=0)
+    dep_time = datetime.strptime(f"{departure_date.replace('/', '-')} {departure_time}:00", "%d-%m-%Y %H:%M:%S")
+    flag = True
+    #Không thể đặt vé trước 4 giờ
+    if current_user.is_authenticated and current_user.user_role == UserRole.STAFF:
+        flag = False
+        return book_sell_ticket(time=latest_policy.ticket_sell_time, dep_time=dep_time, now=time_now)
+    if flag:
+        return book_sell_ticket(time=latest_policy.ticket_booking_time, dep_time=dep_time, now=time_now)
 
     # Format giá vé
     formatted_price = "{:,.0f}".format(price).replace(',', '.')
@@ -338,82 +358,60 @@ def add_data():
                            total=total, receipt=receipt)
 
 
+def get_flight_id(code, dep_airport, des_airport):
+    return dao.get_flight_by_code_and_airports(code, dep_airport, des_airport)
+
+
 @app.route('/api/schedule', methods=['GET', 'POST'])
 def flight_schedule():
     if not current_user.is_authenticated:
-        flash("Bạn cần đăng nhập để truy cập!")  # Thông báo cho người dùng
+        flash("Bạn cần đăng nhập để truy cập!", "danger")  # Thông báo cho người dùng
         return redirect(url_for('login_view'))  # Chuyển hướng đến trang đăng nhập
 
         # Kiểm tra vai trò người dùng
     if current_user.user_role != UserRole.STAFF:
-        flash("Bạn không phải là nhân viên hệ thống!")  # Thông báo cho người dùng
+        flash("Bạn không phải là nhân viên hệ thống!", "danger")  # Thông báo cho người dùng
         return redirect(url_for('index'))  # Chuyển hướng đến trang chính
 
-    flightcodes = dao.load_flight()
+    flightcode = dao.load_unique_flights()
+    flightcodes = [code[0] for code in flightcode]
     airports = dao.load_airport()
-    airplanes = dao.load_ariplane()
 
     if request.method == 'POST':
         data = request.get_json()
+        flight_code = data['flight_code']
+        dep_airport = data['dep_airport']
+        des_airport = data['des_airport']
+        flight_id_row = dao.get_flight_by_code_and_airports(flight_code, dep_airport, des_airport)
+        flight_id = flight_id_row[0]
+        if not flight_id:
+            return jsonify({"error": "Không tìm thấy chuyến bay."}), 404
 
         try:
             dep_date = datetime.strptime(data['dep_time'], "%Y-%m-%d %H:%M:00")
             if dep_date < datetime.now():
                 return jsonify({"success": False, "message": "Ngày khởi hành không thể nhỏ hơn ngày hiện tại!"}), 400
-            # Bước 1: Kiểm tra và thêm tuyến bay
-            try:
-                existing_route = dao.find_flight_route(data['dep_airport'], data['des_airport'])
-                if not existing_route:
-                    flight_route = FlightRoute(
-                        dep_airport_id=data['dep_airport'],
-                        des_airport_id=data['des_airport']
-                    )
-                    db.session.add(flight_route)
-                    db.session.flush()
-                    existing_route = flight_route
-            except Exception as e:
-                db.session.rollback()  # Rollback nếu có lỗi
-                return jsonify({"success": False, "message": f"Lỗi khi thêm tuyến bay: {str(e)}"}), 500
-
-            # Bước 2: Thêm chuyến bay
-            try:
-                flight = Flight(
-                    flight_code=data['flight_code'],
-                    flight_route_id=existing_route.id,
-                    airplane_id=data['airplane_id']
-                )
-                db.session.add(flight)
-                db.session.flush()
-            except IntegrityError as e:
-                db.session.rollback()  # Rollback nếu có lỗi
-                # Kiểm tra lỗi duplicate
-                if 'Duplicate entry' in str(e.orig):
-                    return jsonify({"success": False, "message": "Đã tồn tại mã chuyến trong tuyến bay này."}), 400
-                return jsonify({"success": False, "message": f"Error: {str(e)}"}), 500
-
-            # Bước 3: Thêm lịch trình bay
             try:
                 flight_schedule = FlightSchedule(
-                    dep_time=data['dep_time'],
+                    dep_time=dep_date,
                     flight_time=data['flight_time'],
-                    flight_id=flight.id,
+                    flight_id=flight_id,
                     business_class_seat_size=int(data['business_class_seat_size']),
                     economy_class_seat_size=int(data['economy_class_seat_size']),
                     business_class_price=int(data['first_class_price']),
                     economy_class_price=int(data['second_class_price'])
                 )
                 db.session.add(flight_schedule)
-                db.session.flush()
                 flight_schedule.create_seat_assignments()
             except Exception as e:
                 db.session.rollback()  # Rollback nếu có lỗi
                 return jsonify({"success": False, "message": f"Lỗi khi thêm lịch trình bay: {str(e)}"}), 500
 
-            # Bước 4: Xử lý sân bay trung gian
+                # Bước 4: Xử lý sân bay trung gian
             try:
                 if data.get('ai_1'):
                     intermediate_airport_1 = IntermediateAirport(
-                        flight_id=flight.id,
+                        flight_id=flight_id,
                         airport_id=data['ai_1'],
                         stop_time=data['stop_time_1'],
                         note=data.get('note_1')
@@ -421,7 +419,7 @@ def flight_schedule():
                     db.session.add(intermediate_airport_1)
                 if data.get('ai_2'):
                     intermediate_airport_2 = IntermediateAirport(
-                        flight_id=flight.id,
+                        flight_id=flight_id,
                         airport_id=data['ai_2'],
                         stop_time=data['stop_time_2'],
                         note=data.get('note_2')
@@ -431,7 +429,7 @@ def flight_schedule():
                 db.session.rollback()  # Rollback nếu có lỗi
                 return jsonify({"success": False, "message": f"Lỗi khi thêm sân bay trung gian: {str(e)}"}), 500
 
-            # Lưu tất cả thay đổi vào cơ sở dữ liệu
+                # Lưu tất cả thay đổi vào cơ sở dữ liệu
             db.session.commit()
 
             return jsonify({"success": True, "message": "Lưu thành công"}), 200
@@ -440,16 +438,67 @@ def flight_schedule():
             db.session.rollback()  # Rollback nếu có lỗi toàn bộ
             return jsonify({"success": False, "message": f"Lỗi không xác định: {str(e)}"}), 500
 
-    return render_template('schedule.html', flightcodes=flightcodes, airports=airports, airplanes=airplanes)
+    return render_template('schedule.html', flightcodes=flightcodes, airports=airports)
 
 
-@app.route('/api/schedule/<airplane_id>')
-def update_seats(airplane_id):
-    seats = dao.get_max_seat(airplane_id)
+@app.route('/api/schedule/<code>')
+def choose_flight(code):
+    # Lấy tất cả flight_id có cùng flight_code
+    flight_ids = dao.get_flight(code)
+
+    if not flight_ids:
+        return jsonify({'error': 'Không tìm thấy chuyến bay với mã code này'}), 404
+
+    # Lấy thông tin flight_route từ flight_id
+    flight_routes = []
+    for flight_id_tuple in flight_ids:
+        flight_id = flight_id_tuple[0]  # Lấy flight_id từ tuple
+        route = dao.load_flight_routes(flight_id)
+
+        if not route:
+            return jsonify({'error': 'Không tìm thấy thông tin chuyến bay'}), 404
+
+        dep_airport_id, des_airport_id = route[0]  # Lấy dep_airport_id và des_airport_id từ kết quả
+
+        # Lấy thông tin sân bay đi và đến từ id
+        dep_airport = db.session.query(Airport).filter(Airport.id == dep_airport_id).first()
+        des_airport = db.session.query(Airport).filter(Airport.id == des_airport_id).first()
+
+        if not dep_airport or not des_airport:
+            return jsonify({'error': 'Không tìm thấy sân bay tương ứng'}), 404
+
+        # Thêm thông tin sân bay vào danh sách
+        flight_routes.append({
+            'flight_id': flight_id,
+            'dep_airport': {'id': dep_airport.id, 'name': dep_airport.name},
+            'des_airport': {'id': des_airport.id, 'name': des_airport.name}
+        })
+
+    # Trả về thông tin các sân bay
+    return jsonify({'flights': flight_routes}), 200
+
+
+@app.route('/api/schedule/<code>/<dep_airport>/<des_airport>', methods=['GET'])
+def get_seats_by_schedule(code, dep_airport, des_airport):
+    # Kiểm tra thông tin đầu vào
+    if not all([code, dep_airport, des_airport]):
+        return jsonify({"error": "Thiếu thông tin bắt buộc."}), 400
+
+    # Lấy flight_id từ DAO
+    flight_id_row = dao.get_flight_by_code_and_airports(code, dep_airport, des_airport)
+    flight_id = flight_id_row[0]
+    if not flight_id:
+        return jsonify({"error": "Không tìm thấy chuyến bay."}), 404
+
+    # Lấy số lượng ghế tối đa từ DAO
+    max_seats = dao.get_max_seat(flight_id)
+    if not max_seats:
+        return jsonify({"error": "Không thể lấy thông tin ghế."}), 404
+
     return jsonify({
-        'first_class_seat': seats[0],
-        'second_class_seat': seats[1]
-    }), 200
+        "first_class_seat": max_seats.business_class_seat_size,
+        "second_class_seat": max_seats.economy_class_seat_size
+    })
 
 
 if __name__ == '__main__':

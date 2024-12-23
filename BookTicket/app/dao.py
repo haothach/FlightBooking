@@ -12,6 +12,7 @@ from sqlalchemy import func, text, and_
 from flask_login import current_user
 from sqlalchemy.sql import extract
 
+
 def load_province():
     return Province.query.order_by('name').all()
 
@@ -21,9 +22,33 @@ def load_airport():
 
 
 def load_flight():
-    flights = Flight.query.all()  # Lấy tất cả các chuyến bay
-    flight_codes = {flight.flight_code for flight in flights}  # Dùng set để lấy các mã chuyến bay duy nhất
-    return sorted(flight_codes)  # Sắp xếp theo thứ tự
+    return Flight.query.order_by('id').all()
+
+
+def load_unique_flights():
+    # Truy vấn tất cả các chuyến bay với flight_code duy nhất
+    flights = db.session.query(Flight.flight_code).distinct(Flight.flight_code).all()
+
+    return flights
+
+
+def get_newest_policy():
+    return
+
+
+def get_flight(code):
+    return db.session.query(Flight.id).filter(Flight.flight_code == code).all()
+
+
+def load_flight_routes(flight_id):
+    return db.session.query(
+        FlightRoute.dep_airport_id,
+        FlightRoute.des_airport_id,
+    ).join(
+        Flight, FlightRoute.id == Flight.flight_route_id
+    ).filter(
+        Flight.id == flight_id
+    ).all()
 
 
 def load_ariplane():
@@ -252,19 +277,31 @@ def format_flight_time(flight_time):
         return f"{hours} giờ {str(minutes).zfill(2)} phút"
 
 
-def get_max_seat(airplane_id):
+def get_max_seat(flight_id):
     return db.session.query(
         Airplane.business_class_seat_size,
         Airplane.economy_class_seat_size
+    ).join(
+        Flight, Flight.airplane_id == Airplane.id
     ).filter(
-        Airplane.id == airplane_id
+        Flight.id == flight_id
     ).first()
 
 
-def find_flight_route(dep_id,des_id):
+def find_flight_route(dep_id, des_id):
     return FlightRoute.query.filter_by(
         dep_airport_id=dep_id,
         des_airport_id=des_id
+    ).first()
+
+
+def get_flight_by_code_and_airports(flight_code, dep_airport_id, des_airport_id):
+    return db.session.query(Flight.id).join(
+        FlightRoute, FlightRoute.id == Flight.flight_route_id
+    ).filter(
+        Flight.flight_code.__eq__(flight_code),
+        FlightRoute.dep_airport_id == dep_airport_id,
+        FlightRoute.des_airport_id == des_airport_id
     ).first()
 
 
@@ -293,6 +330,7 @@ def revenue_stats():
             )
             .all())
 
+
 def revenue_month(time='month', year=datetime.now().year):
     return db.session.query(
                 func.extract(time, Receipt.created_date),
@@ -303,6 +341,7 @@ def revenue_month(time='month', year=datetime.now().year):
             .group_by(func.extract(time, Receipt.created_date)) \
             .order_by(func.extract(time, Receipt.created_date)) \
             .all()
+
 
 def revenue_year(time='year'):
     return db.session.query(
@@ -317,3 +356,6 @@ def revenue_year(time='year'):
     ).all()
 
 
+if __name__ == '__main__':
+    with app.app_context():
+        print(load_flight_routes('11'))
