@@ -375,7 +375,7 @@ class Receipt(BaseModel):
 class ReceiptDetail(BaseModel):
     quantity = Column(Integer, default=0)
     unit_price = Column(Integer, default=0)
-    receipt_id = Column(Integer, ForeignKey(Receipt.id), nullable=False)
+    receipt_id = Column(Integer, ForeignKey(Receipt.id), nullable=False, unique=True)
 
     flight_route_id = Column(Integer, ForeignKey(FlightRoute.id), nullable=False)
 

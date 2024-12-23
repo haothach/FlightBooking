@@ -256,12 +256,12 @@ def add_customer():
 def add_ticket(customer, seat_code):
     # Kiểm tra seat_code có hợp lệ hay không
     if not seat_code:
-        raise ValueError("Seat code is missing.")  # Thông báo nếu không có seat_code
+        raise ValueError("Không có seatcode")  # Thông báo nếu không có seat_code
 
     # Lấy tất cả ghế có seat_code tương ứng
     seat = db.session.query(Seat).filter(Seat.seat_code == seat_code).first()
     if not seat:
-        raise ValueError(f"Seat with code {seat_code} not found.")
+        raise ValueError(f"Không tìm thấy chổ ngồi mã số {seat_code}.")
 
     # Lấy flight_schedule_id từ SeatAssignment có seat_code tương ứng
     seat_assignment = db.session.query(SeatAssignment).join(Seat).filter(
@@ -270,7 +270,7 @@ def add_ticket(customer, seat_code):
     ).first()
 
     if seat_assignment is None:
-        raise ValueError(f"No available seat found for {seat_code}.")
+        raise ValueError(f"Ghế không khả dụng {seat_code}.")
 
     flight_schedule_id = seat_assignment.flight_schedule_id
 
@@ -322,7 +322,7 @@ def add_data():
     flight_id = request.form.get('flight_id')  # Lấy ID chuyến bay
     flight = dao.get_flight_by_id(flight_id)  # Tìm chuyến bay trong DB
     if not flight:
-        raise ValueError("Flight not found.")  # Xử lý nếu không tìm thấy chuyến bay
+        raise ValueError("Không tìm thấy chuyến bay")  # Xử lý nếu không tìm thấy chuyến bay
 
     flight_route_id = flight.flight_route_id  # Lấy flight_route_id từ chuyến bay
 
