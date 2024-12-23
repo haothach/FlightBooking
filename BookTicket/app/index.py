@@ -119,6 +119,11 @@ def login_admin_view():
     return redirect('/admin')
 
 
+@app.template_filter('is_staff')
+def is_staff(user):
+    return user.is_authenticated and user.user_role == UserRole.STAFF
+
+
 @app.route("/staff")
 def staff_view():
     return render_template("staff.html")
@@ -156,8 +161,8 @@ def book_sell_ticket(time, now, dep_time):
     if now > min_sell_time:
         flash(f"Chỉ được bán vé các chuyến bay trước {time} giờ trước giờ khởi hành", "danger")
         # Lấy các tham số query từ URL gốc và tạo lại URL với các tham số đó
-        print(request.referrer)
         return redirect(request.referrer)
+    return True
 
 
 @app.route('/booking')
@@ -178,10 +183,13 @@ def book_tickets():
     flag = True
     #Không thể đặt vé trước 4 giờ
     if current_user.is_authenticated and current_user.user_role == UserRole.STAFF:
-        flag = False
-        return book_sell_ticket(time=latest_policy.ticket_sell_time, dep_time=dep_time, now=time_now)
+        result = book_sell_ticket(time=latest_policy.ticket_sell_time, dep_time=dep_time, now=time_now)
+        if result is not True:  # Nếu không hợp lệ, dừng tại đây
+            return result
     if flag:
-        return book_sell_ticket(time=latest_policy.ticket_booking_time, dep_time=dep_time, now=time_now)
+        result = book_sell_ticket(time=latest_policy.ticket_booking_time, dep_time=dep_time, now=time_now)
+        if result is not True:  # Nếu không hợp lệ, dừng tại đây
+            return result
 
     # Format giá vé
     formatted_price = "{:,.0f}".format(price).replace(',', '.')
@@ -390,7 +398,13 @@ def flight_schedule():
         try:
             dep_date = datetime.strptime(data['dep_time'], "%Y-%m-%d %H:%M:00")
             if dep_date < datetime.now():
-                return jsonify({"success": False, "message": "Ngày khởi hành không thể nhỏ hơn ngày hiện tại!"}), 400
+                return jsonify({"success": False, "message": "Ngày khởi hành không thể bằng hoặc nhỏ hơn ngày hiện tại!"}), 400
+            # Xử lí lập lịch chuyến bay bị trùng thời gian
+            dep_date_list = dao.get_dep_time(flight_id)
+            for dd in dep_date_list:
+                if dep_date == dd[0]:
+                    return jsonify(
+                        {"success": False, "message": "Chuyến bay này đã được lập lịch với thời gian này rồi."}), 400
             try:
                 flight_schedule = FlightSchedule(
                     dep_time=dep_date,

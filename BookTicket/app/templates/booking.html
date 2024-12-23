@@ -5,9 +5,9 @@
 
 {% if not current_user.is_authenticated %}
 <div class="card bg-danger text-white text-center fs-4 p-3">
-    <a href="/login?next={{ request.url }}" class="text-decoration-underline text-white fw-bold">BẠN CẦN ĐĂNG NHẬP ĐỂ MUA VÉ</a>
+    <a href="/login?next={{ request.url }}" class="text-decoration-underline text-white fw-bold">BẠN CẦN ĐĂNG NHẬP ĐỂ
+        MUA VÉ</a>
 </div>
-
 {% endif %}
 <form action="/add_data" method="POST" id="paymentForm">
     <input type="hidden" name="passenger_count" value="{{ passenger }}">
@@ -139,19 +139,26 @@
             </label>
         </div>
     </div>
-     <input type="hidden" id="payment-method-hidden" name="payment_method" value="">
-
+    <input type="hidden" id="payment-method-hidden" name="payment_method" value="">
+    {% if not current_user|is_staff %}
     <div class="text-center mt-4">
         <div class="text-center mt-4">
             <button type="button" class="btn btn-danger btn-lg" id="confirmPaymentBtn" onclick="submitForm()">Mua Vé
             </button>
         </div>
     </div>
+    {% else %}
+    <div class="text-center mt-4">
+        <div class="text-center mt-4">
+            <button type="button" class="btn btn-danger btn-lg" id="ticket" onclick="submitForm()">Xuất Vé
+            </button>
+        </div>
+    </div>
+    {% endif %}
     {% endif %}
 
 
 </form>
-
 <script>
     if (window.location.pathname === '/booking') {
        const params = new URLSearchParams(window.location.search);
@@ -178,6 +185,9 @@
             alert("Vui lòng chọn phương thức thanh toán!");
         }
     }
+
+
+
 </script>
 
 {% endblock %}
