@@ -17,6 +17,8 @@ class FlightRouteView(AuthenticatedView):
     can_view_details = True
     # form_columns = ['dep_airport_id', 'des_airport_id']
     column_list = ['dep_airport', 'des_airport', 'flights']
+    form_columns = ['dep_airport', 'des_airport']
+    form_excluded_columns = ['receipt_details']
 
 
 class FlightView(AuthenticatedView):

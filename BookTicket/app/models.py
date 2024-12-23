@@ -100,6 +100,21 @@ class FlightRoute(BaseModel):
     flights = relationship('Flight', backref='flight_route', lazy=True)
     receipt_details = relationship('ReceiptDetail', backref='flight_route', lazy=True)
 
+    @validates('dep_airport_id', 'des_airport_id')
+    def validate_airports(self, key, value):
+        if key == 'dep_airport_id':
+            current_dep_airport = value
+            current_des_airport = self._sa_instance_state.dict.get('des_airport_id', None)
+        elif key == 'des_airport_id':
+            current_des_airport = value
+            current_dep_airport = self._sa_instance_state.dict.get('dep_airport_id', None)
+
+        if current_dep_airport is not None and current_des_airport is not None:
+            if current_dep_airport == current_des_airport:
+                raise ValueError("Nơi đến và nơi đi không được phép giống nhau.")
+
+        return value
+
     def __str__(self):
         dep_airport_name = self.dep_airport.name
         des_airport_name = self.des_airport.name
@@ -121,7 +136,6 @@ class Airplane(BaseModel):
         return self.name
 
     def generate_seats(self):
-        """Tạo danh sách ghế dựa trên số lượng ghế business và economy."""
         seats = []
 
         seat_letters = ['A', 'B', 'C', 'D', 'E', 'F']  # Các cột từ A đến F
@@ -235,9 +249,7 @@ class FlightSchedule(BaseModel):
             )
 
     def create_seat_assignments(self):
-        """
-        Tạo danh sách SeatAssignment cho lịch bay dựa trên số ghế được định sẵn.
-        """
+
         # Lấy đối tượng Flight từ flight_id
         flight = db.session.query(Flight).filter_by(id=self.flight_id).first()
 
@@ -246,7 +258,7 @@ class FlightSchedule(BaseModel):
             print(f"Không tìm thấy chuyến bay nào có id là : {self.flight_id} .")
             return
 
-        # Lấy danh sách ghế business và economy với số lượng giới hạn theo yêu cầu
+
         business_seats = db.session.query(Seat).filter(
             Seat.airplane_id == flight.airplane_id,
             Seat.seat_class == TicketClass.Business_Class
@@ -312,23 +324,20 @@ class IntermediateAirport(db.Model):
 
         # Lấy thông tin Policy
         policy = db.session.query(Policy).first()
-        if not policy:
-            raise ValueError("Policy information is missing. Please check the database.")
+
 
         # Kiểm tra số lượng sân bay trung gian hiện tại của chuyến bay
         current_inter_airports = db.session.query(IntermediateAirport).filter_by(flight_id=flight_id).count()
 
         if current_inter_airports >= policy.max_inter_airport:
             raise ValueError(
-                f"Không thể tạo nhiều sân bay trung gian hơn nữa.Tối đa chi được {policy.max_inter_airport}."
-            )
+                f"Không thể tạo nhiều sân bay trung gian hơn nữa.Tối đa chi được {policy.max_inter_airport}.")
 
         # Kiểm soát giá trị stop_time
         stop_time = kwargs.get('stop_time', self.stop_time)
         if not (policy.minimum_stop_time <= stop_time <= policy.maximum_stop_time):
-            raise ValueError(
-                f"Thời gian dừng phải nằm giữa  {policy.minimum_stop_time} phút và {policy.maximum_stop_time} phút."
-            )
+            raise ValueError(f"Thời gian dừng phải nằm giữa  {policy.minimum_stop_time} phút và "
+                             f"{policy.maximum_stop_time} phút.")
 
     def __str__(self):
         return self.airport.name
@@ -395,8 +404,13 @@ if __name__ == '__main__':
         u2 = User(name="staff", username="staff", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
                   avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1731852091/cld-sample-5.jpg",
                   user_role=UserRole.STAFF)
+
+        u3 = User(name="user", username="user", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
+                  avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1731852091/cld-sample-5.jpg",
+                  user_role=UserRole.USER)
         db.session.add(u1)
         db.session.add(u2)
+        db.session.add(u3)
         db.session.commit()
         provinces = [
             {"name": "TP HCM"},
@@ -524,52 +538,52 @@ if __name__ == '__main__':
 
         flight_schedules = [
             {
-                "dep_time": datetime(2024, 12, 10, 8, 30),
+                "dep_time": datetime(2024, 12, 30, 8, 30),
                 "flight_time": 120,
-                "flight_id": 1,
+                "flight_id": 1, #---------TPHCM-Ha Noi
                 "business_class_seat_size": 15,
                 "economy_class_seat_size": 55,
                 "business_class_price": 1800000,  # Giá business cao hơn economy
                 "economy_class_price": 1500000
             },
             {
-                "dep_time": datetime(2024, 12, 10, 10, 0),
+                "dep_time": datetime(2024, 12, 30, 10, 0),
                 "flight_time": 90,
-                "flight_id": 2,
+                "flight_id": 2, #---------Nội Bài đến Đà Nẵng
                 "business_class_seat_size": 25,
                 "economy_class_seat_size": 60,
                 "business_class_price": 3300000,  # Giá business cao hơn economy
                 "economy_class_price": 3000000
             },
             {
-                "dep_time": datetime(2024, 12, 10, 12, 0),
+                "dep_time": datetime(2024, 12, 30, 12, 0),
                 "flight_time": 80,
-                "flight_id": 3,
+                "flight_id": 3,#----------Đà Nẵng đến Vinh
                 "business_class_seat_size": 20,
                 "economy_class_seat_size": 70,
                 "business_class_price": 1800000,  # Giá business cao hơn economy
                 "economy_class_price": 1500000
             },
             {
-                "dep_time": datetime(2024, 12, 10, 15, 0),
+                "dep_time": datetime(2024, 12, 30, 15, 0),
                 "flight_time": 100,
-                "flight_id": 4,
+                "flight_id": 4,#-----------Vinh đến Cần Thơ
                 "business_class_seat_size": 15,
                 "economy_class_seat_size": 50,
                 "business_class_price": 2200000,  # Giá business cao hơn economy
                 "economy_class_price": 2000000
             },
             {
-                "dep_time": datetime(2024, 12, 11, 8, 0),
+                "dep_time": datetime(2024, 12, 30, 8, 0),
                 "flight_time": 130,
-                "flight_id": 5,
+                "flight_id": 5,#----------Tân Sơn Nhất đến Hải Phòng
                 "business_class_seat_size": 30,
                 "economy_class_seat_size": 60,
                 "business_class_price": 6000000,  # Giá business cao hơn economy
                 "economy_class_price": 5500000
             },
             {
-                "dep_time": datetime(2024, 12, 10, 14, 0),
+                "dep_time": datetime(2024, 12, 30, 14, 0),
                 "flight_time": 95,
                 "flight_id": 6,
                 "business_class_seat_size": 20,
@@ -578,7 +592,7 @@ if __name__ == '__main__':
                 "economy_class_price": 1500000
             },
             {
-                "dep_time": datetime(2024, 12, 10, 10, 30),
+                "dep_time": datetime(2024, 12, 30, 10, 30),
                 "flight_time": 115,
                 "flight_id": 7,
                 "business_class_seat_size": 15,
@@ -587,7 +601,7 @@ if __name__ == '__main__':
                 "economy_class_price": 1500000
             },
             {
-                "dep_time": datetime(2024, 12, 12, 17, 0),
+                "dep_time": datetime(2024, 12, 30, 17, 0),
                 "flight_time": 120,
                 "flight_id": 8,
                 "business_class_seat_size": 10,
