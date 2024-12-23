@@ -18,7 +18,7 @@
     <input type="hidden" name="province_dep" value="{{ flight.flight_route.dep_airport.province.name }}">
     <input type="hidden" name="province_des" value="{{ flight.flight_route.des_airport.province.name }}">
     <input type="hidden" name="total" value="{{ total }}">
-    <input type="hidden" name="ticket_class" value="{{ total }}">
+    <input type="hidden" name="ticket_class" value="{{ ticket_class }}">
     <!-- Chi tiết hành khách -->
     {% for p in range(passenger) %}
     <h4 class="mt-4">Chi tiết hành khách {{ p + 1 }}</h4>
@@ -174,9 +174,9 @@
         if (selectedMethod) {
             // Gán giá trị vào input hidden dựa trên phương thức thanh toán
             if (selectedMethod.value === 'momo') {
-                hiddenInput.value = 'momo_method';
+                hiddenInput.value = 'momo';
             } else if (selectedMethod.value === 'bank') {
-                hiddenInput.value = 'bank_method';
+                hiddenInput.value = 'bank';
             }
             const userConfirmed = confirm("Bạn có chắc chắn muốn thanh toán?");
             if (userConfirmed) {

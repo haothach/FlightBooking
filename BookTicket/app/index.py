@@ -262,6 +262,7 @@ def add_customer():
 
 # Hàm thêm ticket cho khách hàng
 def add_ticket(customer, seat_code):
+    ticket_class = request.form.get('ticket_class')
     # Kiểm tra seat_code có hợp lệ hay không
     if not seat_code:
         raise ValueError("Không có seatcode")  # Thông báo nếu không có seat_code
@@ -290,7 +291,8 @@ def add_ticket(customer, seat_code):
     ticket = Ticket(
         seat_assignment_id=seat_assignment.id,
         user_id=current_user.id,  # Nếu người dùng đã đăng nhập
-        customer_id=customer.id  # Liên kết ticket với customer
+        customer_id=customer.id,  # Liên kết ticket với customer
+        ticket_class=TicketClass.Economy_Class if ticket_class.__eq__("Economy Class") else TicketClass.Business_Class
     )
 
     # Thêm ticket vào session và lưu vào DB
@@ -303,7 +305,7 @@ def create_receipt(user_id, total, flight_route_id, ticket_count, method):
     receipt = Receipt(
         user_id=user_id,
         total=total,
-        method=Method.Bank if method == 'bank_method' else Method.Momo
+        method=Method.Bank if method.__eq__('bank') else Method.Momo
     )
     db.session.add(receipt)
     db.session.commit()  # Lưu Receipt vào DB để lấy ID
@@ -338,6 +340,7 @@ def add_data():
     total_str = request.form.get('total')  # Giá trị từ form
     total = int(total_str.replace('.', '').replace(',', ''))  # Loại bỏ dấu phân cách và chuyển đổi
     method = request.form.get('payment_method')
+
 
     user_id = current_user.id  # ID người dùng đã đăng nhập
 
