@@ -279,7 +279,7 @@ class FlightSchedule(BaseModel):
             db.session.add(seat_assignment)
 
         # Commit vào cơ sở dữ liệu
-        db.session.commit()
+        db.session.flush()
 
 
 class Seat(BaseModel):
