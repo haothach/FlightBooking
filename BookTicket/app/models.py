@@ -419,7 +419,7 @@ if __name__ == '__main__':
             {"name": "Nghệ An"},
             {"name": "Cần Thơ"},
             {"name": "Hải Phòng"},
-            {"name": "Đà Lạt"},
+            {"name": "Lâm Đồng"},
             {"name": "Quảng Ninh"},
             {"name": "Khánh Hòa"},
             {"name": "Đồng Nai"}
@@ -439,7 +439,8 @@ if __name__ == '__main__':
             {"name": "Cát Bì", "add": "Số 15 đường Nguyễn Đức Cảnh, Hải Phòng", "province_id": 6},
             {"name": "Liên Khương", "add": "Xã Liên Nghĩa, Huyện Đức Trọng, Lâm Đồng", "province_id": 7},
             {"name": "Vân Đồn", "add": "Số 28 đường Vân Đồn, Quảng Ninh", "province_id": 8},
-            {"name": "Long Thành", "add": "Xã Long Thanh, Huyện Long Thành, tỉnh Đồng Nai", "province_id": 9},
+            {"name": "Cam Ranh", "add": "Sân bay Cam Ranh, Phường Cam Nghĩa, TP Cam Ranh, Khánh Hòa", "province_id": 9},
+            {"name": "Long Thành", "add": "Xã Long Thanh, Huyện Long Thành, tỉnh Đồng Nai", "province_id": 10},
         ]
 
         for a in airports:
@@ -525,9 +526,7 @@ if __name__ == '__main__':
             {"flight_code": "BB789", "flight_route_id": 3, "airplane_id": 3},
             {"flight_code": "VN101", "flight_route_id": 4, "airplane_id": 4},
             {"flight_code": "BB202", "flight_route_id": 5, "airplane_id": 5},
-            {"flight_code": "VJ303", "flight_route_id": 1, "airplane_id": 6},
-            {"flight_code": "BB57O", "flight_route_id": 1, "airplane_id": 7},
-            {"flight_code": "A9125", "flight_route_id": 1, "airplane_id": 2}
+            {"flight_code": "VJ303", "flight_route_id": 1, "airplane_id": 6}
         ]
 
         for flight in flights:
@@ -588,24 +587,6 @@ if __name__ == '__main__':
                 "flight_id": 6,
                 "business_class_seat_size": 20,
                 "economy_class_seat_size": 45,
-                "business_class_price": 1800000,  # Giá business cao hơn economy
-                "economy_class_price": 1500000
-            },
-            {
-                "dep_time": datetime(2024, 12, 30, 10, 30),
-                "flight_time": 115,
-                "flight_id": 7,
-                "business_class_seat_size": 15,
-                "economy_class_seat_size": 45,
-                "business_class_price": 1800000,  # Giá business cao hơn economy
-                "economy_class_price": 1500000
-            },
-            {
-                "dep_time": datetime(2024, 12, 30, 17, 0),
-                "flight_time": 120,
-                "flight_id": 8,
-                "business_class_seat_size": 10,
-                "economy_class_seat_size": 55,
                 "business_class_price": 1800000,  # Giá business cao hơn economy
                 "economy_class_price": 1500000
             }
