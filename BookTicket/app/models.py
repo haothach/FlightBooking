@@ -345,7 +345,7 @@ class IntermediateAirport(db.Model):
 class Ticket(BaseModel):
     date_created = Column(DateTime, default=datetime.now())
 
-    seat_assignment_id = Column(Integer, ForeignKey(SeatAssignment.id), nullable=False)
+    seat_assignment_id = Column(Integer, ForeignKey(SeatAssignment.id), nullable=False, unique=True)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
     customer_id = Column(Integer, ForeignKey(Customer.id), nullable=False)
     ticket_class = Column(Enum(TicketClass), nullable=False)
