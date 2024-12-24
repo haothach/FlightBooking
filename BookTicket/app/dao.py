@@ -153,6 +153,7 @@ def load_flights(departure, destination, departure_date):
             SeatAssignment.seat_id == Seat.id
         ).scalar_subquery().label('remaining_economy_seats'),
         Flight.id.label('flight_id'),
+        FlightSchedule.id.label('flight_schedule_id'),  # Thêm flight_schedule_id
         # Intermediate airports
         func.max(
             case(
@@ -227,15 +228,17 @@ def load_flights(departure, destination, departure_date):
             "remaining_business_seats": row[10],  # Số ghế hạng 1 còn lại
             "remaining_economy_seats": row[11],  # Số ghế hạng 2 còn lại
             "flight_id": row[12],  # ID chuyến bay
-            "intermediate_airport_1": row[13],  # Sân bay trung gian 1
-            "ia_stop_time_1": row[14],  # Thời gian dừng tại sân bay trung gian 1
-            "intermediate_airport_2": row[15],  # Sân bay trung gian 2\
-            "ia_stop_time_2": row[16],  # Thời gian dừng tại sân bay trung gian 2
+            "flight_schedule_id": row[13],  # ID lịch bay
+            "intermediate_airport_1": row[14],  # Sân bay trung gian 1
+            "ia_stop_time_1": row[15],  # Thời gian dừng tại sân bay trung gian 1
+            "intermediate_airport_2": row[16],  # Sân bay trung gian 2
+            "ia_stop_time_2": row[17],  # Thời gian dừng tại sân bay trung gian 2
         }
         for row in results
     ]
 
     return flights
+
 
 
 def get_available_seats_by_row(flight_id, seat_class):

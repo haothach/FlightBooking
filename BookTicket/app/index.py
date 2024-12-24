@@ -165,6 +165,7 @@ def book_tickets():
     departure_time = request.args.get('departure_time')
     arrival_time = request.args.get('arrival_time')
     price = int(request.args.get('price'))
+    flight_schedule_id = request.args.get('flight_schedule_id')
 
     latest_policy = dao.get_latest_policy()# Lấy policy mới nhất
     time_now = datetime.now().replace(microsecond=0)
@@ -218,7 +219,8 @@ def book_tickets():
         total=formatted_total,
         available_seats=available_seats,
         flight=flight,
-        encoded_url=encoded_url
+        encoded_url=encoded_url,
+        flight_schedule_id=flight_schedule_id
     )
 
 
@@ -229,6 +231,7 @@ def add_customer():
         birth_date = request.form.get(f'passenger_birth_{p}')
         gender = request.form.get(f'passenger_gender_{p}')
         seat_code = request.form.get(f'seat_{p}')  # Ghế mà khách hàng đã chọn
+
 
         # Kiểm tra seat_code có hợp lệ hay không
         if not seat_code:
@@ -255,6 +258,9 @@ def add_customer():
 
 # Hàm thêm ticket cho khách hàng
 def add_ticket(customer, seat_code):
+    flight_schedule_id = request.form.get('flight_schedule_id')
+    if not flight_schedule_id:
+        raise ValueError("Thiếu thông tin flight_schedule_id.")
     ticket_class = request.form.get('ticket_class')
     # Kiểm tra seat_code có hợp lệ hay không
     if not seat_code:
@@ -268,11 +274,13 @@ def add_ticket(customer, seat_code):
     # Lấy flight_schedule_id từ SeatAssignment có seat_code tương ứng
     seat_assignment = db.session.query(SeatAssignment).join(Seat).filter(
         Seat.seat_code == seat_code,
-        SeatAssignment.is_available == True
+        SeatAssignment.is_available == True,
+        SeatAssignment.flight_schedule_id == flight_schedule_id
     ).first()
 
+
     if seat_assignment is None:
-        raise ValueError(f"Ghế không khả dụng {seat_code}.")
+        raise ValueError(f"Ghế không khả dụng flight scheduel {flight_schedule_id}.")
 
     flight_schedule_id = seat_assignment.flight_schedule_id
 
@@ -318,6 +326,7 @@ def create_receipt(user_id, total, flight_route_id, ticket_count, method):
 
 @app.route('/add_data', methods=['POST'])
 def add_data():
+
     # Xử lý thông tin hành khách
     add_customer()
 

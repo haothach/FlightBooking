@@ -391,7 +391,7 @@ if __name__ == '__main__':
             minimum_stop_time=20,  # Thời gian dừng tối thiểu tại sân bay trung gian
             maximum_stop_time=30,  # Thời gian dừng tối đa tại sân bay trung gian
             number_ticket_class=2,  # Số hạng vé (2 hạng vé)
-            ticket_price=1000,  # Giá vé (ví dụ: 1000 là đơn vị tiền tệ)
+            ticket_price=1000000,  # Giá vé (ví dụ: 1000 là đơn vị tiền tệ)
             ticket_sell_time=4,  # Thời gian bán vé (ví dụ: 1440 phút = 1 ngày)
             ticket_booking_time=12,  # Thời gian đặt vé (ví dụ: 240 phút = 4 giờ trước khi chuyến bay)
         )

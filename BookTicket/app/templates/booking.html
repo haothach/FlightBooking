@@ -21,6 +21,7 @@
     <input type="hidden" name="province_des" value="{{ flight.flight_route.des_airport.province.name }}">
     <input type="hidden" name="total" value="{{ total }}">
     <input type="hidden" name="ticket_class" value="{{ ticket_class }}">
+    <input type="hidden" name="flight_schedule_id" value="{{ flight_schedule_id }}">
     <!-- Chi tiết hành khách -->
     {% for p in range(passenger) %}
     <h4 class="mt-4">Chi tiết hành khách {{ p + 1 }}</h4>

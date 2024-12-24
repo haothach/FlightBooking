@@ -116,6 +116,7 @@
                             <input type="hidden" name="arrival_time" value="{{ f.arrival_time.strftime('%H:%M') }}">
                             <input type="hidden" name="flight_time" value="{{ f.flight_time }}">
                             <input type="hidden" name="price" value="{{ f.economy_price }}">
+                            <input type="hidden" name="flight_schedule_id" value="{{ f.flight_schedule_id }}">
                             <button type="submit" class="btn btn-primary">Chọn</button>
                         </form>
 
@@ -134,6 +135,7 @@
                             <input type="hidden" name="arrival_time" value="{{ f.arrival_time.strftime('%H:%M')  }}">
                             <input type="hidden" name="flight_time" value="{{ f.flight_time }}">
                             <input type="hidden" name="price" value="{{ f.business_price }}">
+                            <input type="hidden" name="flight_schedule_id" value="{{ f.flight_schedule_id }}">
                             <button type="submit" class="btn btn-warning" >Chọn</button>
                         </form>
                     </div>
