@@ -33,7 +33,6 @@ def search():
     arrival_time_range = request.args.get('arrival_time_range')
     # Lấy danh sách chuyến bay
     flights = dao.load_flights(departure, destination, departure_date)
-
     formatted_date = datetime.strptime(departure_date, '%Y-%m-%d').strftime('%d/%m/%Y')
 
     # Lọc theo giờ cất cánh (nếu có)
