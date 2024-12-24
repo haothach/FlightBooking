@@ -399,15 +399,16 @@ if __name__ == '__main__':
         db.session.add(new_policy)
 
         u1 = User(name="admin", username="admin", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
-                  avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1731852091/cld-sample-5.jpg",
+                  avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1735048518/admin.jpg",
                   user_role=UserRole.ADMIN)
         u2 = User(name="staff", username="staff", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
-                  avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1731852091/cld-sample-5.jpg",
+                  avatar="https://https://res.cloudinary.com/dnoubiojc/image/upload/v1735048587/staff.jpg",
                   user_role=UserRole.STAFF)
 
         u3 = User(name="user", username="user", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
-                  avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1731852091/cld-sample-5.jpg",
+                  avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1735048551/user.png",
                   user_role=UserRole.USER)
+
         db.session.add(u1)
         db.session.add(u2)
         db.session.add(u3)
