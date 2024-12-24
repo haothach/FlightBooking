@@ -2,7 +2,7 @@ from email.policy import default
 
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Enum, Date, DateTime, event, UniqueConstraint
 from sqlalchemy.orm import relationship, validates, backref
-from app import db, app
+from app import db, app, dao
 import hashlib
 from enum import Enum as RoleEnum
 from enum import Enum as AirlineEnum
@@ -60,6 +60,7 @@ class User(BaseModel, UserMixin):
 
     tickets = relationship('Ticket', backref='user', lazy=True)
     receipts = relationship('Receipt', backref='user', lazy=True)
+    policies = relationship('Policy', backref('user'), lazy=True)
 
 
 class Customer(BaseModel):
@@ -227,7 +228,7 @@ class FlightSchedule(BaseModel):
                 f"Số ghế hạng phổ thông không được nhỏ hơn số lượng quy định ({airplane.economy_class_seat_size})."
             )
 
-        policy = db.session.query(Policy).first()
+        policy = dao.get_latest_policy()
         if policy is None:
             raise ValueError("Policy information is missing. Please check the database.")
 
@@ -257,7 +258,6 @@ class FlightSchedule(BaseModel):
         if not flight:
             print(f"Không tìm thấy chuyến bay nào có id là : {self.flight_id} .")
             return
-
 
         business_seats = db.session.query(Seat).filter(
             Seat.airplane_id == flight.airplane_id,
@@ -323,7 +323,7 @@ class IntermediateAirport(db.Model):
             raise ValueError("Mã chuyến bay phải được cung cấp.")
 
         # Lấy thông tin Policy
-        policy = db.session.query(Policy).first()
+        policy = dao.get_latest_policy()
 
 
         # Kiểm tra số lượng sân bay trung gian hiện tại của chuyến bay
@@ -362,6 +362,8 @@ class Policy(BaseModel):
     ticket_price = Column(Integer, nullable=False)
     ticket_sell_time = Column(Integer, nullable=False)
     ticket_booking_time = Column(Integer, nullable=False)
+
+    admin_id = Column(Integer, ForeignKey(User.id), nullable=False )
 
 
 class Receipt(BaseModel):
