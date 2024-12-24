@@ -4,9 +4,11 @@
 <h1 class="text-center text-primary mt-4">THÔNG TIN HÀNH KHÁCH VÀ THANH TOÁN</h1>
 
 {% if not current_user.is_authenticated %}
+
 <div class="card bg-danger text-white text-center fs-4 p-3">
-    <a href="/login?next={{ request.url }}" class="text-decoration-underline text-white fw-bold">BẠN CẦN ĐĂNG NHẬP ĐỂ
-        MUA VÉ</a>
+    <a href="/login?next={{ encoded_url  }}" class="text-decoration-underline text-white fw-bold">
+        BẠN CẦN ĐĂNG NHẬP ĐỂ MUA VÉ
+    </a>
 </div>
 {% endif %}
 <form action="/add_data" method="POST" id="paymentForm">
@@ -186,6 +188,7 @@
             alert("Vui lòng chọn phương thức thanh toán!");
         }
     }
+
 
 
 

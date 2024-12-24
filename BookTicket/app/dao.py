@@ -1,7 +1,7 @@
 import datetime
 
 from app.models import User, Province, Airport, Flight, FlightRoute, FlightSchedule, TicketClass, Seat, SeatAssignment, \
-    Airplane, IntermediateAirport, Receipt, ReceiptDetail
+    Airplane, IntermediateAirport, Receipt, ReceiptDetail, Policy
 from app import app, db
 import hashlib
 import cloudinary.uploader
@@ -11,6 +11,9 @@ from sqlalchemy.orm import joinedload, aliased
 from sqlalchemy import func, text, and_
 from flask_login import current_user
 from sqlalchemy.sql import extract
+# function connect to database
+from sqlalchemy import func, case, text
+from sqlalchemy.orm import aliased
 
 
 def load_province():
@@ -49,6 +52,10 @@ def load_flight_routes(flight_id):
     ).filter(
         Flight.id == flight_id
     ).all()
+
+
+def get_latest_policy():
+    return Policy.query.order_by(Policy.id.desc()).first()
 
 
 def load_ariplane():
@@ -92,10 +99,6 @@ def auth_user(username, password, role=None):
 def get_user_by_id(id):
     return User.query.get(id)
 
-
-# function connect to database
-from sqlalchemy import func, case, text
-from sqlalchemy.orm import aliased
 
 
 def load_flights(departure, destination, departure_date):

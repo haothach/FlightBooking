@@ -1,9 +1,10 @@
 import hashlib
 import string
-
+from urllib.parse import quote, unquote
 from flask import render_template, request, redirect, flash, jsonify, url_for, session
 from app import admin
 import dao
+import base64
 from app import app, login, db
 from flask_login import login_user, logout_user
 from app.models import (UserRole, Customer, Gender, Flight, Airplane, Ticket, SeatAssignment, Seat, IntermediateAirport,
@@ -34,22 +35,6 @@ def search():
     # Lấy danh sách chuyến bay
     flights = dao.load_flights(departure, destination, departure_date)
     formatted_date = datetime.strptime(departure_date, '%Y-%m-%d').strftime('%d/%m/%Y')
-
-    # Lọc theo giờ cất cánh (nếu có)
-    if time_range:
-        start, end = map(int, time_range.split('-'))
-        flights = [
-            flight for flight in flights
-            if start <= flight['departure_time'].hour < end
-        ]
-
-    # Lọc theo giờ hạ cánh (nếu có)
-    if arrival_time_range:
-        start, end = map(int, arrival_time_range.split('-'))
-        flights = [
-            flight for flight in flights
-            if start <= flight['arrival_time'].hour < end
-        ]
 
     # Kiểm tra ngày chọn có trước ngày hiện tại không
     departure_date = datetime.strptime(departure_date, '%Y-%m-%d').date()
@@ -100,6 +85,11 @@ def login_view():
                 return redirect('/staff')
 
             next_url = request.args.get('next')
+            if next_url:
+                try:
+                    next_url = base64.b64decode(next_url).decode()
+                except Exception as e:
+                    next_url = None
             return redirect(next_url if next_url else '/')
         else:
             flash("Đăng nhập thất bại", "danger")
@@ -176,7 +166,7 @@ def book_tickets():
     arrival_time = request.args.get('arrival_time')
     price = int(request.args.get('price'))
 
-    latest_policy = Policy.query.order_by(Policy.id.desc()).first()# Lấy policy mới nhất
+    latest_policy = dao.get_latest_policy()# Lấy policy mới nhất
     time_now = datetime.now().replace(microsecond=0)
     dep_time = datetime.strptime(f"{departure_date.replace('/', '-')} {departure_time}:00", "%d-%m-%Y %H:%M:%S")
     flag = True
@@ -212,6 +202,9 @@ def book_tickets():
     if not flight:
         return "Flight not found.", 404
 
+    # Mã hóa dữ liệu
+    encoded_url = base64.b64encode(request.url.encode()).decode()
+
     # Render template booking.html
     return render_template(
         'booking.html',
@@ -224,7 +217,8 @@ def book_tickets():
         ticket_class=seat_class.replace('_', ' '),  # Hiển thị đẹp hơn
         total=formatted_total,
         available_seats=available_seats,
-        flight=flight
+        flight=flight,
+        encoded_url=encoded_url
     )
 
 
