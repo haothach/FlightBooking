@@ -349,6 +349,7 @@ class Ticket(BaseModel):
     seat_assignment_id = Column(Integer, ForeignKey(SeatAssignment.id), nullable=False)
     user_id = Column(Integer, ForeignKey(User.id), nullable=False)
     customer_id = Column(Integer, ForeignKey(Customer.id), nullable=False)
+    ticket_class = Column(Enum(TicketClass), nullable=False)
 
 
 class Policy(BaseModel):
@@ -375,7 +376,7 @@ class Receipt(BaseModel):
 class ReceiptDetail(BaseModel):
     quantity = Column(Integer, default=0)
     unit_price = Column(Integer, default=0)
-    receipt_id = Column(Integer, ForeignKey(Receipt.id), nullable=False)
+    receipt_id = Column(Integer, ForeignKey(Receipt.id), nullable=False, unique=True)
 
     flight_route_id = Column(Integer, ForeignKey(FlightRoute.id), nullable=False)
 
