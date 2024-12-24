@@ -190,6 +190,40 @@
         }
     }
 
+document.addEventListener("DOMContentLoaded", function () {
+    const seatSelectElements = document.querySelectorAll('select[name^="seat_"]');
+
+    function updateAvailableSeats() {
+        // Lấy danh sách tất cả các ghế đã được chọn
+        const selectedSeats = Array.from(seatSelectElements).map(select => select.value);
+
+        seatSelectElements.forEach(select => {
+            const currentSelectedSeat = select.value; // Ghế hiện tại đang được chọn
+
+            // Xóa tất cả các tùy chọn cũ
+            Array.from(select.options).forEach(option => {
+                if (option.value) {
+                    option.style.display = ""; // Hiển thị lại tùy chọn
+                }
+            });
+
+            // Ẩn các ghế đã chọn, ngoại trừ ghế hiện tại đang được chọn
+            Array.from(select.options).forEach(option => {
+                if (selectedSeats.includes(option.value) && option.value !== currentSelectedSeat) {
+                    option.style.display = "none";
+                }
+            });
+        });
+    }
+
+    // Thêm sự kiện 'change' vào mỗi `select`
+    seatSelectElements.forEach(select => {
+        select.addEventListener('change', updateAvailableSeats);
+    });
+
+    // Khởi tạo lần đầu
+    updateAvailableSeats();
+});
 
 
 
