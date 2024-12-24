@@ -20,53 +20,8 @@
 
 <!-- Filter Section -->
 <div class="row mt-4">
-    <div class="col-md-3">
-        <div class="border p-3 rounded">
-            <button class="btn btn-danger w-100 mb-3">Đặt lại tất cả</button>
-
-            <!-- Airline Filter -->
-            <h6>Hãng hàng không</h6>
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="vietnamAirlines">
-                <label class="form-check-label" for="vietnamAirlines">Vietnam Airlines</label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="bambooAirways">
-                <label class="form-check-label" for="bambooAirways">Bamboo Airways</label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="vietjetAir" checked>
-                <label class="form-check-label" for="vietjetAir">Vietjet Air</label>
-            </div>
-
-            <!-- Flight Time Filter -->
-            <h6 class="mt-3">Thời gian bay</h6>
-            <h6 class="mt-2">Giờ cất cánh</h6>
-            <form method="GET" action="/search">
-                <!-- Ẩn các giá trị tìm kiếm hiện tại để giữ trạng thái -->
-                <input type="hidden" name="departure" value="{{ departure }}">
-                <input type="hidden" name="destination" value="{{ destination }}">
-                <input type="hidden" name="departure-date" value="{{ departure_date }}">
-                <input type="hidden" name="passengers" value="{{ passenger }}">
-            </form>
-
-            <!-- Landing Time Filter -->
-            <h6 class="mt-2">Giờ hạ cánh</h6>
-            <form method="GET" action="/search">
-                <!-- Ẩn các giá trị tìm kiếm hiện tại để giữ trạng thái -->
-                <input type="hidden" name="departure" value="{{ departure }}">
-                <input type="hidden" name="destination" value="{{ destination }}">
-                <input type="hidden" name="departure-date" value="{{ departure_date }}">
-                <input type="hidden" name="passengers" value="{{ passenger }}">
-            </form>
-        </div>
-    </div>
-
-    <!-- Flight Results Section -->
-
-    <div class="col-md-9">
+    <div>
         {% if flights %}
-
         {% for f in flights %}
         <div class="container py-4">
             <!-- Flight Card -->
