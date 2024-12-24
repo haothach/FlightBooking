@@ -1,47 +1,71 @@
-<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+<nav class="navbar navbar-expand-lg bg-light navbar-light shadow-sm">
     <div class="container-fluid">
-        <a class="navbar-brand" href="#">E-COMMERCE WEBSITE</a>
+        <!-- Logo -->
+        <a class="navbar-brand fw-bold text-primary" href="#">
+            <i class="fas fa-shopping-cart me-2"></i>BOOKING WEBSITE
+        </a>
+
+        <!-- Toggler button for mobile view -->
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
             <span class="navbar-toggler-icon"></span>
         </button>
+
+        <!-- Navbar items -->
         <div class="collapse navbar-collapse" id="collapsibleNavbar">
             <ul class="navbar-nav me-auto">
+                <!-- Trang chủ link -->
                 {% if current_user|is_staff %}
                 <li class="nav-item">
-                    <a class="nav-link" href="/staff">Trang chủ</a>
-                </li>
-                {% else %}
-                <li class="nav-item">
-                    <a class="nav-link" href="/">Trang chủ</a>
-                </li>
-                {% endif %}
-                <li class="nav-item">
-                    <a class="nav-link" href="/">Tin khuyến mãi</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="/contact">Liên hệ</a>
-                </li>
-
-                {% if current_user.is_authenticated %}
-                <li class="nav-item">
-                    <a class="nav-link text-danger" href="/">
-                        <img src="{{ current_user.avatar }}" width="25" class="rounded-circle"/> Chào {{
-                        current_user.username }}
+                    <a class="nav-link text-dark fw-semibold" href="/staff">
+                        <i class="fas fa-home me-1"></i>Trang chủ
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link text-danger" href="/logout">Đăng xuất</a>
-                </li>
                 {% else %}
                 <li class="nav-item">
-                    <a class="nav-link text-danger" href="/login">&#129333; Đăng nhập</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-info" href="/register">&#129333; Đăng ký</a>
+                    <a class="nav-link text-dark fw-semibold" href="/">
+                        <i class="fas fa-home me-1"></i>Trang chủ
+                    </a>
                 </li>
                 {% endif %}
 
+                <!-- Contact link -->
+                <li class="nav-item">
+                    <a class="nav-link text-dark fw-semibold" href="/contact">
+                        <i class="fas fa-envelope me-1"></i>Liên hệ
+                    </a>
+                </li>
+            </ul>
+
+            <!-- User Authentication links -->
+            <ul class="navbar-nav">
+                {% if current_user.is_authenticated %}
+                <!-- Greeting user -->
+                <li class="nav-item">
+                    <a class="nav-link text-primary" href="/">
+                        <img src="{{ current_user.avatar }}" width="25" class="rounded-circle border border-primary me-1"/>
+                        Chào, {{ current_user.username }}
+                    </a>
+                </li>
+                <!-- Logout -->
+                <li class="nav-item">
+                    <a class="nav-link btn btn-outline-primary px-3 py-1 ms-2" href="/logout">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </a>
+                </li>
+                {% else %}
+                <!-- Login -->
+                <li class="nav-item">
+                    <a class="nav-link btn btn-outline-secondary px-3 py-1" href="/login">
+                        <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                    </a>
+                </li>
+                <!-- Register -->
+                <li class="nav-item ms-2">
+                    <a class="nav-link btn btn-outline-success px-3 py-1" href="/register">
+                        <i class="fas fa-user-plus"></i> Đăng ký
+                    </a>
+                </li>
+                {% endif %}
             </ul>
         </div>
     </div>
