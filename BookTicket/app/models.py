@@ -402,7 +402,7 @@ if __name__ == '__main__':
                   avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1735048518/admin.jpg",
                   user_role=UserRole.ADMIN)
         u2 = User(name="staff", username="staff", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
-                  avatar="https://https://res.cloudinary.com/dnoubiojc/image/upload/v1735048587/staff.jpg",
+                  avatar="https://res.cloudinary.com/dnoubiojc/image/upload/v1735048587/staff.jpg",
                   user_role=UserRole.STAFF)
 
         u3 = User(name="user", username="user", password=str(hashlib.md5("123456".encode('utf-8')).hexdigest()),
